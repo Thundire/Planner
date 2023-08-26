@@ -12,6 +12,9 @@ public class DatabaseContext : DbContext
     public virtual DbSet<User> Users { set; get; }
     public virtual DbSet<Role> Roles { set; get; }
     public virtual DbSet<UserRole> UserRoles { get; set; }
+    public virtual DbSet<Contractor> Contractors { get; set; }
+    public virtual DbSet<Goal> Goals { get; set; }
+    public virtual DbSet<GoalElapsedTimePart> GoalElapsedTimeParts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
