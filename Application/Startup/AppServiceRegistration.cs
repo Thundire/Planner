@@ -40,9 +40,13 @@ public static class AppServiceRegistration
         // add custom services
         services.AddScoped<UsersService>();
         services.AddScoped<RolesService>();
-			services.AddScoped<IAuthValidator, AuthValidator>();
-			services.AddScoped<AuthService>();
-			return services;
+        services.AddScoped<IAuthValidator, AuthValidator>();
+        services.AddScoped<AuthService>();
+
+        services.AddScoped<ContractorsRepository>();
+        services.AddScoped<GoalsRepository>();
+
+        return services;
     }
 
     private static IServiceCollection AddEventServices(this IServiceCollection services)
