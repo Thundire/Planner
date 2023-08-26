@@ -24,10 +24,9 @@ public class AuthService
     public async Task<User?> GetAuthenticatedUser()
     {
         var userId = await GetAuthenticatedUserId();
-        if (userId != null)
+        if (userId.HasValue)
         {
-            var id = userId ?? default(int);
-            return await _usersService.FindUserAsync(id);
+            return await _usersService.FindUserAsync(userId.Value);
         }
         return null;
     }
@@ -36,7 +35,7 @@ public class AuthService
     {
         var authState = await _stateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        if (user.Identity is { IsAuthenticated: true })
         {
             var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdString, out var userId))

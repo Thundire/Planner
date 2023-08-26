@@ -27,8 +27,7 @@ public class Login : PageModel
         _cookieService = cookieService;
     }
 
-    [BindProperty]
-    public LoginModel Model { get; set; }
+    [BindProperty] public LoginModel Model { get; set; } = new();
 
     public void OnGet()
     {
@@ -40,11 +39,6 @@ public class Login : PageModel
 
         if (!ModelState.IsValid)
             return Page();
-
-        if (Model == null)
-        {
-            return BadRequest("user is not set.");
-        }
 
         var user = await _usersService.FindUserAsync(Model.Email, _usersService.GetSha256Hash(Model.Password));
 
@@ -74,13 +68,13 @@ public class Login : PageModel
     {
         [Display(Name = "Email")]
         [Required(ErrorMessage = "Please enter a valid email address")]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Display(Name = "Password")]
         [Required(ErrorMessage = "Invalid password")]
         [DataType(DataType.Password)]
-        public string Password { get; set; }
-        public bool RememberMe { get; set; } = false;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }
 
     }
 }

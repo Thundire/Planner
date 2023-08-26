@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Claims;
 using Coravel.Events.Interfaces;
@@ -19,11 +20,11 @@ public class Register : PageModel
     private readonly IConfiguration _configuration;
     private readonly UsersService _usersService;
     private readonly AuthService _cookieService;
-    private IDispatcher _dispatcher;
+    private readonly IDispatcher _dispatcher;
 
-    [BindProperty]
-    public RegisterModel Model { get; set; }
-    public string ReturnUrl { get; set; }
+    [BindProperty] public RegisterModel Model { get; set; } = new();
+
+    public string ReturnUrl { get; set; } = string.Empty;
 
     public Register(
         IConfiguration configuration,
@@ -36,7 +37,7 @@ public class Register : PageModel
         _cookieService = cookieService;
         _dispatcher = dispatcher;
     }
-
+    
     public void OnGet()
     {
         ReturnUrl = Url.Content("~/");
@@ -47,11 +48,6 @@ public class Register : PageModel
 
         if (!ModelState.IsValid)
             return Page();
-
-        if (Model == null)
-        {
-            return BadRequest("user is not set.");
-        }
 
         var existingUser = await _usersService.FindUserByEmailAsync(Model.Email);
 
@@ -76,7 +72,7 @@ public class Register : PageModel
         await _dispatcher.Broadcast(userCreated);
 
         var user = await _usersService.FindUserAsync(newUser.Email, newUser.Password);
-
+        _ = user ?? throw new InvalidOperationException("User created but not found");
         var cookieExpirationDays = _configuration.GetValue("Spark:Auth:CookieExpirationDays", 5);
         var cookieClaims = await _cookieService.CreateCookieClaims(user);
 
@@ -97,16 +93,16 @@ public class Register : PageModel
 public class RegisterModel
 {
     [Required(ErrorMessage = "Name is required")]
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     [EmailAddress(ErrorMessage = "Invalid email address")]
     [Required(ErrorMessage = "Email is required")]
-    public string Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Password is required")]
-    public string Password { get; set; }
+    public string Password { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Confirm password is required")]
     [Compare("Password", ErrorMessage = "The Password and Confirm Password do not match.")]
-    public string ConfirmPassword { get; set; }
+    public string ConfirmPassword { get; set; } = string.Empty;
 }

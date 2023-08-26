@@ -1,5 +1,7 @@
 ﻿@page "/"
 
+@inject ILogger Logger
+
 <PageTitle>Home page</PageTitle>
 
 <section class="mx-auto max-w-6xl bg-white mb-20">
@@ -15,3 +17,11 @@
         </p>
     </article>
 </section>
+
+@code
+{
+	protected override void OnInitialized()
+	{
+		Logger.Information($"Initialized at {DateTime.Now}");
+	}
+}

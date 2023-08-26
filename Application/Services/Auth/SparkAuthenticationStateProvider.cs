@@ -39,7 +39,7 @@ public class SparkAuthenticationStateProvider : RevalidatingServerAuthentication
         }
     }
 
-    private async Task<bool> ValidateUserAsync(UsersService userManager, ClaimsPrincipal? principal)
+    private static async Task<bool> ValidateUserAsync(UsersService userManager, ClaimsPrincipal? principal)
     {
         if (principal is null)
         {

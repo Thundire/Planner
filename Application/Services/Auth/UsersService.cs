@@ -55,12 +55,9 @@ public class UsersService
     }
 
     public string GetSha256Hash(string input)
-    {
-        using (var hashAlgorithm = SHA256.Create())
-        {
-            var byteValue = Encoding.UTF8.GetBytes(input);
-            var byteHash = hashAlgorithm.ComputeHash(byteValue);
-            return Convert.ToBase64String(byteHash);
-        }
-    }
+	{
+		var byteValue = Encoding.UTF8.GetBytes(input);
+		var byteHash = SHA256.HashData(byteValue);
+		return Convert.ToBase64String(byteHash);
+	}
 }
