@@ -9,12 +9,12 @@ public class DatabaseContext : DbContext
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
     { }
 
-    public virtual DbSet<User> Users { set; get; }
-    public virtual DbSet<Role> Roles { set; get; }
-    public virtual DbSet<UserRole> UserRoles { get; set; }
-    public virtual DbSet<Contractor> Contractors { get; set; }
-    public virtual DbSet<Goal> Goals { get; set; }
-    public virtual DbSet<GoalElapsedTimePart> GoalElapsedTimeParts { get; set; }
+    public virtual DbSet<User> Users { set; get; } = null!;
+    public virtual DbSet<Role> Roles { set; get; } = null!;
+    public virtual DbSet<UserRole> UserRoles { get; set; } = null!;
+    public virtual DbSet<Contractor> Contractors { get; set; } = null!;
+    public virtual DbSet<Goal> Goals { get; set; } = null!;
+    public virtual DbSet<GoalElapsedTimePart> GoalElapsedTimeParts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
