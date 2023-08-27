@@ -8,12 +8,18 @@ public class Goal : BaseModel
     public virtual Contractor Contractor { get; set; } = new();
     public TimeSpan ElapsedTime { get; set; }
     public string Comment { get; set; } = string.Empty;
-    public ICollection<GoalElapsedTimePart> ElapsedTimeParts { get; set; } = new HashSet<GoalElapsedTimePart>();
+    public List<GoalElapsedTimePart> ElapsedTimeParts { get; set; } = new ();
 
     public virtual User User { get; set; } = new();
 
-    public void CollapseElapsedTime()
+    public void CollapseElapsedTime(bool fixCollapsed = false)
     {
-        ElapsedTime = ElapsedTimeParts.Select(x => x.ElapsedTime).Aggregate((l, r) => l + r);
+        ElapsedTime = ElapsedTimeParts
+	        .Select(x =>
+            {
+	            if (fixCollapsed) x.Collapsed = true;
+	            return x.ElapsedTime;
+            })
+	        .Aggregate((l, r) => l + r);
     }
 }
