@@ -16,7 +16,7 @@ public class ContractorsRepository
     public async Task<List<Contractor>> List()
     {
         await using var context = await _factory.CreateDbContextAsync();
-        return await context.Contractors.OrderBy(x=>x.Name).ToListAsync();
+        return await context.Contractors.OrderBy(x=>x.Name).AsNoTracking().ToListAsync();
     }
 
     public async Task<Contractor> StoreOrUpdate(Contractor data)
