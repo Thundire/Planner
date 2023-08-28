@@ -7,6 +7,7 @@ using Spark.Library.Database;
 using Spark.Library.Logging;
 using Coravel;
 using Microsoft.AspNetCore.Components.Authorization;
+using MudBlazor.Services;
 using Spark.Library.Auth;
 using Planner.Application.Jobs;
 using Spark.Library.Mail;
@@ -21,7 +22,6 @@ public static class AppServiceRegistration
         services.AddRazorPages();
         services.AddServerSideBlazor();
         services.AddDatabase<DatabaseContext>(config);
-        services.AddAutoMapper(typeof(Program).Assembly);
         services.AddLogger(config);
         services.AddAuthorization(config, new string[] { CustomRoles.Admin, CustomRoles.User });
         services.AddAuthentication<IAuthValidator>(config);
@@ -32,7 +32,8 @@ public static class AppServiceRegistration
         services.AddEventServices();
         services.AddEvents();
         services.AddMailer(config);
-        return services;
+        services.AddMudServices();
+		return services;
     }
 
     private static IServiceCollection AddCustomServices(this IServiceCollection services)

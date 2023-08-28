@@ -5,11 +5,17 @@
 
 <PageTitle>@AppName</PageTitle>
 
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
 <CascadingValue Value="this">
-	<NavMenu />
-	<main class="container px-6 max-w-6xl mx-auto py-12">
-		@Body
-	</main>
+	<MudLayout>
+		<NavMenu />
+		<MudMainContent class="container px-6 max-w-6xl mx-auto py-12">
+			@Body
+		</MudMainContent>
+	</MudLayout>
 </CascadingValue>
 
 @code
