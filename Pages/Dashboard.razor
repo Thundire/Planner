@@ -1,15 +1,169 @@
 ﻿@page "/dashboard"
 @attribute [Authorize]
+@inject GoalsRepository GoalsRepository
+@inject ContractorsRepository ContractorsRepository
 
 <PageTitle>Dashboard</PageTitle>
 
 <section class="mx-auto max-w-6xl mb-20">
-    <h1 class="text-2xl text-gray-800 font-bold mb-4">
-        Dashboard
-    </h1>
-    <article class="bg-white shadow rounded-lg w-full my-12 p-6">
-        <p class="text-gray-600">
-            You're logged in!
-        </p>
-    </article>
+	<MudPaper Class="p-4">
+		<MudForm Model="Goal" OnValidSubmit="StoreOrUpdate">
+			<MudTextField T="string" Label="Name" @bind-Value="Goal.Name" Clearable Variant="Variant.Filled" Lines="2"/>
+			<MudSelect T="Contractor" Label="Contractor" @bind-Value="Goal.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+				<MudSelectItem Value="Contractor.Empty" />
+				@foreach (var item in Contractors)
+				{
+					<MudSelectItem Value="item" />
+				}
+			</MudSelect>
+
+			<MudTextField T="string" Label="Comment" @bind-Value="Goal.Comment" Clearable Lines="5" Variant="Variant.Filled"/>
+
+			<div class="mt-2">
+				<MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled">Save</MudButton>
+				<MudButton ButtonType="ButtonType.Reset" Variant="Variant.Filled">Clear</MudButton>
+			</div>
+		</MudForm>
+	</MudPaper>
+	
+			<MudTable class="w-full my-12" T="Goal" Items="@Goals" Hover="true" Breakpoint="Breakpoint.Sm" OnRowClick="@Select">
+			<ColGroup>
+				<col style="width:300px;" />
+				<col style="width:100px;" />
+				<col />
+				<col style="width:100px;" />
+			</ColGroup>
+			<HeaderContent>
+				<MudTh></MudTh>
+				<MudTh>ElapsedTime</MudTh>
+				<MudTh>Name</MudTh>
+				<MudTh>Contractor</MudTh>
+				<MudTh></MudTh>
+			</HeaderContent>
+			<RowTemplate>
+				<MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowBtnPress(context))">Parts</MudButton></MudTd>
+				<MudTd DataLabel="ElapsedTime">@context.ElapsedTime.ToString(@"hh\:mm")</MudTd>
+				<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
+				<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
+				<MudTd>
+						<MudButton @onclick="() => Destroy(context)">Delete</MudButton>
+				</MudTd>
+			</RowTemplate>
+			<ChildRowContent>
+				@if (context.ShowParts)
+				{
+					<MudTr>
+						<td colspan="4">
+							<MudCard Elevation="0">
+								<MudCardContent Class="pa-0">
+									<MudTable Items="@context.ElapsedTimeParts.Where(x=>context.ShowCollapsedParts || !x.Collapsed )" Context="Part" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+										<ColGroup>
+											<col />
+											<col />
+											<col style="width:200px;" />
+										</ColGroup>
+										<HeaderContent>
+											<MudTh>Elapsed time</MudTh>
+											<MudTh>Comment</MudTh>
+											<MudTh></MudTh>
+										</HeaderContent>
+										<RowTemplate>
+											<MudTd DataLabel="Address Line 1">@Part.ElapsedTime.ToString(@"hh\:mm")</MudTd>
+											<MudTd DataLabel="Address Line 2">@Part.Comment.Clamp(100)</MudTd>
+											<MudTd>
+												<MudButton @onclick="() => Destroy(Part)">Delete</MudButton>
+											</MudTd>
+										</RowTemplate>
+									</MudTable>
+								</MudCardContent>
+							</MudCard>
+						</td>
+					</MudTr>
+				}
+			</ChildRowContent>
+		</MudTable>
 </section>
+
+@code
+{
+	[CascadingParameter]
+	public MainLayout? Layout { get; set; }
+	public User? User => Layout?.User;
+
+	public Goal Goal { get; set; } = new();
+	public List<Goal> Goals { get; set; } = new();
+	public string ContractorName { get; set; } = string.Empty;
+	public List<Contractor> Contractors { get; set; } = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		Contractors = await ContractorsRepository.List();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			if (User is null) return;
+			Goals = await GoalsRepository.List(User);
+			StateHasChanged();
+		}
+	}
+
+	private async Task StoreOrUpdate()
+	{
+		Goal data = new();
+		Goal.Copy(data, true);
+		var isCreating = Goal.Id == 0;
+		data.UserId = User!.Id;
+		data.ContractorId = Goal.Contractor is not null && Goal.Contractor.Id != Contractor.Empty.Id ? Goal.Contractor.Id : 0;
+		if (isCreating)
+		{
+			data.CreatedAt = DateTime.UtcNow;
+		}
+		else
+		{
+			data.UpdatedAt = DateTime.UtcNow;
+		}
+
+		var saved = await GoalsRepository.StoreOrUpdate(data);
+
+		if (isCreating)
+		{
+			Clear();
+			Goals.Insert(0, saved);
+		}
+		else
+		{
+			var existed = Goals.FirstOrDefault(x => x.Id == saved.Id);
+			existed?.Copy(saved);
+		}
+	}
+
+	private async Task Destroy(Goal entity)
+	{
+		await GoalsRepository.Destroy(entity);
+		Goals.Remove(entity);
+		if (Goal == entity) Clear();
+	}
+
+	private void Clear()
+	{
+		Goal = new();
+	}
+
+	private void Select(TableRowClickEventArgs<Goal> args)
+	{
+		Goal.Copy(args.Item);
+	}
+
+	private void ShowBtnPress(Goal context)
+	{
+		context.ShowParts = !context.ShowParts;
+	}
+
+	private Task Destroy(GoalElapsedTimePart entity)
+	{
+		return null;
+	}
+}
