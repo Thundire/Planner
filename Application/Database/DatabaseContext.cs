@@ -50,5 +50,11 @@ public class DatabaseContext : DbContext
             new Role { Id = 1, Name = CustomRoles.User },
             new Role { Id = 2, Name = CustomRoles.Admin }
         );
+
+        builder.Entity<Goal>(entity =>
+        {
+	        entity.Navigation(x => x.Contractor).AutoInclude();
+	        entity.Navigation(x => x.User).AutoInclude();
+        });
     }
 }

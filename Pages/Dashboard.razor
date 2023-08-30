@@ -7,9 +7,9 @@
 
 <section class="mx-auto max-w-6xl mb-20">
 	<MudPaper Class="p-4">
-		<MudForm Model="Goal" OnValidSubmit="StoreOrUpdate">
-			<MudTextField T="string" Label="Name" @bind-Value="Goal.Name" Clearable Variant="Variant.Filled" Lines="2"/>
-			<MudSelect T="Contractor" Label="Contractor" @bind-Value="Goal.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+		<MudForm Model="GoalFormModel" >
+			<MudTextField T="string" Label="Name" @bind-Value="GoalFormModel.Name" Immediate Clearable Variant="Variant.Filled" Lines="2"/>
+			<MudSelect T="Contractor" Label="Contractor" @bind-Value="GoalFormModel.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
 				<MudSelectItem Value="Contractor.Empty" />
 				@foreach (var item in Contractors)
 				{
@@ -17,11 +17,11 @@
 				}
 			</MudSelect>
 
-			<MudTextField T="string" Label="Comment" @bind-Value="Goal.Comment" Clearable Lines="5" Variant="Variant.Filled"/>
+			<MudTextField T="string" Label="Comment" @bind-Value="GoalFormModel.Comment" Clearable Lines="5" Variant="Variant.Filled" />
 
 			<div class="mt-2">
-				<MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled">Save</MudButton>
-				<MudButton ButtonType="ButtonType.Reset" Variant="Variant.Filled">Clear</MudButton>
+				<MudButton Variant="Variant.Filled" OnClick="StoreOrUpdate">Save</MudButton>
+				<MudButton Variant="Variant.Filled" OnClick="Clear">Clear</MudButton>
 			</div>
 		</MudForm>
 	</MudPaper>
@@ -90,7 +90,7 @@
 	public MainLayout? Layout { get; set; }
 	public User? User => Layout?.User;
 
-	public Goal Goal { get; set; } = new();
+	private GoalEditForm GoalFormModel { get; set; } = new();
 	public List<Goal> Goals { get; set; } = new();
 	public string ContractorName { get; set; } = string.Empty;
 	public List<Contractor> Contractors { get; set; } = new();
@@ -112,17 +112,26 @@
 
 	private async Task StoreOrUpdate()
 	{
-		Goal data = new();
-		Goal.Copy(data, true);
-		var isCreating = Goal.Id == 0;
-		data.UserId = User!.Id;
-		data.ContractorId = Goal.Contractor is not null && Goal.Contractor.Id != Contractor.Empty.Id ? Goal.Contractor.Id : 0;
+		var contractorFilled = GoalFormModel.Contractor is not null && GoalFormModel.Contractor.Id != Contractor.Empty.Id;
+		Goal data = new()
+		{
+			Id = GoalFormModel.Id,
+			Contractor = contractorFilled ? GoalFormModel.Contractor : null,
+			Name = GoalFormModel.Name,
+			Comment = GoalFormModel.Comment
+		};
+
+		var isCreating = GoalFormModel.Id == 0;
+		
+
 		if (isCreating)
 		{
+			data.User = User;
 			data.CreatedAt = DateTime.UtcNow;
 		}
 		else
 		{
+			data.CreatedAt = GoalFormModel.Source!.CreatedAt;
 			data.UpdatedAt = DateTime.UtcNow;
 		}
 
@@ -136,7 +145,11 @@
 		else
 		{
 			var existed = Goals.FirstOrDefault(x => x.Id == saved.Id);
-			existed?.Copy(saved);
+			if (existed is not null)
+			{
+				existed.Copy(saved, false, true);
+				GoalFormModel.Fill(existed);
+			}
 		}
 	}
 
@@ -144,17 +157,17 @@
 	{
 		await GoalsRepository.Destroy(entity);
 		Goals.Remove(entity);
-		if (Goal == entity) Clear();
+		if (GoalFormModel.Id == entity.Id) Clear();
 	}
 
 	private void Clear()
 	{
-		Goal = new();
+		GoalFormModel = new();
 	}
 
 	private void Select(TableRowClickEventArgs<Goal> args)
 	{
-		Goal.Copy(args.Item);
+		if(args.Item is not null) GoalFormModel.Fill(args.Item);
 	}
 
 	private void ShowBtnPress(Goal context)
@@ -165,5 +178,23 @@
 	private Task Destroy(GoalElapsedTimePart entity)
 	{
 		return null;
+	}
+
+	private class GoalEditForm
+	{
+		public Goal? Source { get; set; }
+		public int Id { get; set; }
+		public Contractor? Contractor { get; set; }
+		public string Name { get; set; } = string.Empty;
+		public string Comment { get; set; } = string.Empty;
+
+		public void Fill(Goal data)
+		{
+			Id = data.Id;
+			Contractor = data.Contractor;
+			Name = data.Name;
+			Comment = data.Comment;
+			Source = data;
+		}
 	}
 }
