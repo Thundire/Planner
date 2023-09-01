@@ -17,7 +17,6 @@ public static class Extensions
 		target.Name         = source.Name;
 		target.CreatedAt    = source.CreatedAt;
 		target.UpdatedAt    = source.UpdatedAt;
-		target.ElapsedTime  = source.ElapsedTime;
 		target.Comment      = source.Comment;
 
 		if (ignoreNavigationProperties) return;
@@ -29,5 +28,15 @@ public static class Extensions
 
 		target.ElapsedTimeParts.Clear();
 		target.ElapsedTimeParts.AddRange(source.ElapsedTimeParts);
+	}
+
+	public static void Copy(this ActiveGoal target, Goal source)
+	{
+		target.Id         = source.Id;
+		target.Name       = source.Name;
+		target.CreatedAt  = source.CreatedAt;
+		target.UpdatedAt  = source.UpdatedAt;
+		target.Comment    = source.Comment;
+		target.Contractor = source.Contractor;
 	}
 }

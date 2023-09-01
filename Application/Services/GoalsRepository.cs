@@ -84,12 +84,15 @@ public class GoalsRepository
 	    return existed;
     }
 
-    public async Task Destroy(Goal data)
+    public async Task Destroy(int id)
     {
 	    await using DatabaseContext context = await _factory.CreateDbContextAsync();
-	    context.Attach(data);
-	    context.Remove(data);
-	    await context.SaveChangesAsync();
+	    var goal = await context.Goals.FindAsync(id);
+	    if (goal is not null)
+	    {
+		    context.Goals.Remove(goal);
+		    await context.SaveChangesAsync();
+	    }
     }
 
     public async Task<GoalElapsedTimePart> StoreOrUpdate(GoalElapsedTimePart data)
