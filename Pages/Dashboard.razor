@@ -1,8 +1,11 @@
 ﻿@page "/dashboard"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Planner.Hubs
 @attribute [Authorize]
 @inject GoalsRepository GoalsRepository
 @inject ContractorsRepository ContractorsRepository
-@inject TimeCounter TimeCounter
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -27,31 +30,31 @@
 			</MudForm>
 		</MudPaper>
 
-		<MudTable class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover="true" Breakpoint="Breakpoint.Sm" OnRowClick="@Select">
-			<ColGroup>
-				<col style="width:300px;" />
-				<col style="width:100px;" />
-				<col />
-				<col style="width:100px;" />
-			</ColGroup>
-			<HeaderContent>
-				<MudTh></MudTh>
-				<MudTh>ElapsedTime</MudTh>
-				<MudTh>Name</MudTh>
-				<MudTh>Contractor</MudTh>
-				<MudTh></MudTh>
-			</HeaderContent>
-			<RowTemplate>
-				<MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowBtnPress(context))">Parts</MudButton></MudTd>
-				<MudTd DataLabel="ElapsedTime">@context.ElapsedTime.ToString(@"hh\:mm")</MudTd>
-				<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
-				<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
-				<MudTd>
-					<MudToggleIconButton Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop" />
-					<MudButton @onclick="() => Destroy(context)">Delete</MudButton>
-				</MudTd>
-			</RowTemplate>
-			@* <ChildRowContent>
+	<MudTable class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover="true" Breakpoint="Breakpoint.Sm" OnRowClick="@Select">
+		<ColGroup>
+			<col style="width:300px;" />
+			<col style="width:100px;" />
+			<col />
+			<col style="width:100px;" />
+		</ColGroup>
+		<HeaderContent>
+			<MudTh></MudTh>
+			<MudTh>ElapsedTime</MudTh>
+			<MudTh>Name</MudTh>
+			<MudTh>Contractor</MudTh>
+			<MudTh></MudTh>
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowBtnPress(context))">Parts</MudButton></MudTd>
+			<MudTd DataLabel="ElapsedTime">@context.ElapsedTime.ToString(@"hh\:mm")</MudTd>
+			<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
+			<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
+			<MudTd>
+				<MudToggleIconButton Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop" />
+				<MudButton @onclick="() => Destroy(context)">Delete</MudButton>
+			</MudTd>
+		</RowTemplate>
+		@* <ChildRowContent>
 		@if (context.ShowParts)
 		{
 		<MudTr>
@@ -84,11 +87,13 @@
 		</MudTr>
 		}
 		</ChildRowContent> *@
-		</MudTable>
-	</section>
+	</MudTable>
+</section>
 
-	@code
+@code
 	{
+	private HubConnection? _hubConnection;
+
 	[CascadingParameter]
 	public MainLayout? Layout { get; set; }
 	public User? User => Layout?.User;
@@ -100,7 +105,21 @@
 
 	protected override async Task OnInitializedAsync()
 	{
+		_hubConnection = new HubConnectionBuilder()
+			.WithUrl(NavigationManager.ToAbsoluteUri("/hubs/timers"))
+			.Build();
+		_hubConnection.On<int, int, TimeSpan>(nameof(ITimers.Tick), (id, userId, elapsedTime) =>
+		{
+			if(User?.Id != userId) return;
+			ActiveGoal? goal = Goals.Find(x => x.ElapsedTimePartId == id);
+			if (goal is null) return;
+			goal.ElapsedTime = elapsedTime;
+			InvokeAsync(StateHasChanged);
+		});
+
 		Contractors = await ContractorsRepository.List();
+
+		await _hubConnection.StartAsync();
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -181,7 +200,7 @@
 
 	private Task Destroy(GoalElapsedTimePart entity)
 	{
-		return null;
+		return Task.CompletedTask;
 	}
 
 	private class GoalEditForm
@@ -199,5 +218,10 @@
 			Name = data.Name;
 			Comment = data.Comment;
 		}
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		if (_hubConnection is not null) await _hubConnection.DisposeAsync();
 	}
 }

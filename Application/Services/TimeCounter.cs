@@ -6,16 +6,36 @@ namespace Planner.Application.Services;
 
 public class TimeCounter
 {
-	private ConcurrentDictionary<int, ActiveGoalTimerData> Timers { get; set; } = new();
+	private ConcurrentDictionary<int, ConcurrentDictionary<int, ActiveGoalTimerData>> Timers { get; set; } = new();
 
-	public void Push(int id, DateTime startTime)
+	public void Push(int id, int userId, DateTime startTime)
 	{
-		_ = Timers.GetOrAdd(id, _ => new(startTime));
+		Timers.AddOrUpdate(userId, _ =>
+		{
+			ConcurrentDictionary<int, ActiveGoalTimerData> dict = new();
+			dict.TryAdd(id, new(startTime));
+			return dict;
+		}, (key, datas) =>
+		{
+			datas.GetOrAdd(id, _ => new(startTime));
+			return datas;
+		});
 	}
 
-	public void Remove(int id) => Timers.Remove(id, out _);
+	public void Remove(int id, int userId)
+	{
+		var timer = Timers.GetValueOrDefault(userId);
+		if (timer != null)
+		{
+			timer.Remove(id, out _);
+			if (timer.IsEmpty)
+			{
+				Timers.Remove(userId, out _);
+			}
+		}
+	}
 
-	public List<Elapsed> ListElapsedTime() => Timers.Select(x => new Elapsed(x.Key, x.Value.ElapsedTime)).ToList();
+	public List<Elapsed> ListElapsedTime() => Timers.SelectMany(x => x.Value.Select(c=> new Elapsed(c.Key, x.Key, c.Value.ElapsedTime))).ToList();
 }
 
 public class ActiveGoalTimerData
@@ -37,4 +57,4 @@ public class ActiveGoalTimerData
 	public Timer Timer { get; } 
 }
 
-public record Elapsed(int Id, TimeSpan Time);
+public record Elapsed(int Id, int UserId, TimeSpan Time);

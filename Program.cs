@@ -1,12 +1,15 @@
+using Microsoft.AspNetCore.ResponseCompression;
 using Spark.Library.Environment;
 using Spark.Library.Config;
 using Planner.Application.Startup;
+using Planner.Hubs;
 
 EnvManager.LoadConfig();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.SetupSparkConfig();
-
+builder.Services.AddSignalR();
+builder.Services.AddResponseCompression(opts => opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new []{ "application/octet-stream" }));
 
 // Add all services to the container.
 builder.Services.AddAppServices(builder.Configuration);
@@ -30,9 +33,11 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();
+app.UseResponseCompression();
 app.UseRouting();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
+app.MapHub<TimersHub>("/hubs/timers");
 
 app.Services.RegisterScheduledJobs();
 app.Services.RegisterEvents();

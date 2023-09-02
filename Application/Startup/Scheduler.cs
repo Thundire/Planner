@@ -10,9 +10,10 @@ public static class Scheduler
         services.UseScheduler(scheduler =>
         {
             // example scheduled job
-            //scheduler
-            //    .Schedule<ExampleJob>()
-            //    .EveryFiveMinutes();
+            scheduler
+                .Schedule<TimeNotifier>()
+                .EverySecond()
+                .PreventOverlapping(nameof(TimeNotifier));
         });
         return services;
     }

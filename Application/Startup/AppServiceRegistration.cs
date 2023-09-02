@@ -61,7 +61,7 @@ public static class AppServiceRegistration
     private static IServiceCollection AddJobServices(this IServiceCollection services)
     {
         // add custom background tasks here
-        services.AddTransient<ExampleJob>();
+        services.AddTransient<TimeNotifier>();
         return services;
     }
 }
