@@ -12,7 +12,7 @@ using Planner.Application.Database;
 namespace Planner.Application.Database.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20230825213713_Initial")]
+    [Migration("20230902155305_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -24,6 +24,124 @@ namespace Planner.Application.Database.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Planner.Application.Models.Contractor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_contractors");
+
+                    b.ToTable("contractors", (string)null);
+                });
+
+            modelBuilder.Entity("Planner.Application.Models.Goal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("comment");
+
+                    b.Property<int?>("ContractorId")
+                        .HasColumnType("int")
+                        .HasColumnName("contractor_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_goals");
+
+                    b.HasIndex("ContractorId")
+                        .HasDatabaseName("ix_goals_contractor_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_goals_user_id");
+
+                    b.ToTable("goals", (string)null);
+                });
+
+            modelBuilder.Entity("Planner.Application.Models.GoalElapsedTimePart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Collapsed")
+                        .HasColumnType("bit")
+                        .HasColumnName("collapsed");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<TimeSpan>("ElapsedTime")
+                        .HasColumnType("time")
+                        .HasColumnName("elapsed_time");
+
+                    b.Property<int>("GoalId")
+                        .HasColumnType("int")
+                        .HasColumnName("goal_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_goal_elapsed_time_parts");
+
+                    b.HasIndex("GoalId")
+                        .HasDatabaseName("ix_goal_elapsed_time_parts_goal_id");
+
+                    b.ToTable("goal_elapsed_time_parts", (string)null);
+                });
 
             modelBuilder.Entity("Planner.Application.Models.Role", b =>
                 {
@@ -145,6 +263,35 @@ namespace Planner.Application.Database.Migrations
                     b.ToTable("user_roles", (string)null);
                 });
 
+            modelBuilder.Entity("Planner.Application.Models.Goal", b =>
+                {
+                    b.HasOne("Planner.Application.Models.Contractor", "Contractor")
+                        .WithMany()
+                        .HasForeignKey("ContractorId")
+                        .HasConstraintName("fk_goals_contractors_contractor_id");
+
+                    b.HasOne("Planner.Application.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .HasConstraintName("fk_goals_users_user_id");
+
+                    b.Navigation("Contractor");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Planner.Application.Models.GoalElapsedTimePart", b =>
+                {
+                    b.HasOne("Planner.Application.Models.Goal", "Goal")
+                        .WithMany("ElapsedTimeParts")
+                        .HasForeignKey("GoalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_goal_elapsed_time_parts_goals_goal_id");
+
+                    b.Navigation("Goal");
+                });
+
             modelBuilder.Entity("Planner.Application.Models.UserRole", b =>
                 {
                     b.HasOne("Planner.Application.Models.Role", "Role")
@@ -164,6 +311,11 @@ namespace Planner.Application.Database.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Planner.Application.Models.Goal", b =>
+                {
+                    b.Navigation("ElapsedTimeParts");
                 });
 
             modelBuilder.Entity("Planner.Application.Models.Role", b =>

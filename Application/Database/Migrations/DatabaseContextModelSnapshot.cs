@@ -64,17 +64,13 @@ namespace Planner.Application.Database.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("comment");
 
-                    b.Property<int>("ContractorId")
+                    b.Property<int?>("ContractorId")
                         .HasColumnType("int")
                         .HasColumnName("contractor_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
-
-                    b.Property<TimeSpan>("ElapsedTime")
-                        .HasColumnType("time")
-                        .HasColumnName("elapsed_time");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -85,7 +81,7 @@ namespace Planner.Application.Database.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("user_id");
 
@@ -269,15 +265,11 @@ namespace Planner.Application.Database.Migrations
                     b.HasOne("Planner.Application.Models.Contractor", "Contractor")
                         .WithMany()
                         .HasForeignKey("ContractorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_goals_contractors_contractor_id");
 
                     b.HasOne("Planner.Application.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_goals_users_user_id");
 
                     b.Navigation("Contractor");
