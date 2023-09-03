@@ -16,13 +16,12 @@ public class TimeNotifier : IInvocable
 		_timersHubContext = timersHubContext;
 	}
 
-    public Task Invoke()
+    public async Task Invoke()
     {
 	    var elapsedTimes = _timeCounter.ListElapsedTime();
-	    Parallel.ForEachAsync(elapsedTimes, async (elapsed, token) =>
+	    await Parallel.ForEachAsync(elapsedTimes, async (elapsed, token) =>
 	    {
 		    await _timersHubContext.Clients.All.Tick(elapsed.Id, elapsed.UserId, elapsed.Time);
 	    });
-        return Task.CompletedTask;
     }
 }

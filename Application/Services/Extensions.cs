@@ -39,4 +39,16 @@ public static class Extensions
 		target.Comment    = source.Comment;
 		target.Contractor = source.Contractor;
 	}
+
+	public static void Copy(this ActiveGoal target, ActiveGoal source)
+	{
+		target.Id               = source.Id;
+		target.Name             = source.Name;
+		target.CreatedAt        = source.CreatedAt;
+		target.UpdatedAt        = source.UpdatedAt;
+		target.Comment          = source.Comment;
+		target.Contractor       = source.Contractor;
+		target.ElapsedTimeTotal = source.ElapsedTimeTotal;
+		target.Tick             = source.Tick;
+	}
 }
