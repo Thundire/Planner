@@ -12,15 +12,11 @@ public class Goal : BaseModel
     public Contractor? Contractor { get; set; }
     public User? User { get; set; }
 
-    public TimeSpan CollapseElapsedTime(bool fixCollapsed = false)
+    public TimeSpan CollapseElapsedTime()
     {
         if(ElapsedTimeParts.Count <= 0) return TimeSpan.Zero;
         return ElapsedTimeParts
-	        .Select(x =>
-            {
-	            if (fixCollapsed) x.Collapsed = true;
-	            return x.ElapsedTime;
-            })
+	        .Select(x => x.ElapsedTime)
 	        .Aggregate((l, r) => l + r);
     }
 }
