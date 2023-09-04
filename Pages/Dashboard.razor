@@ -129,19 +129,19 @@
 			goal.ElapsedTime = elapsedTime;
 			InvokeAsync(StateHasChanged);
 		});
-		_hubConnection.On<int, int, TimeSpan>(nameof(ITimers.GoalElapsedTimeChanged), UpdateGoal);
+		_hubConnection.On<int, ActiveGoal>(nameof(ITimers.GoalChanged), UpdateGoal);
 
 		Contractors = await ContractorsRepository.List();
 
 		await _hubConnection.StartAsync();
 	}
 
-		private void UpdateGoal(int userId, int goalId, TimeSpan data)
+		private void UpdateGoal(int userId, ActiveGoal data)
 		{
 			if (User?.Id != userId) return;
-			ActiveGoal? goal = Goals.Find(x => x.Id == goalId);
+			ActiveGoal? goal = Goals.Find(x => x.Id == data.Id);
 			if (goal is null) return;
-			goal.ElapsedTimeTotal = data;
+			goal.Copy(data);
 			InvokeAsync(StateHasChanged);
 		}
 

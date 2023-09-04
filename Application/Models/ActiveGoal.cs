@@ -5,8 +5,8 @@ public class ActiveGoal
 	public int Id { get; set; }
 	public DateTime CreatedAt { get; set; }
 	public DateTime? UpdatedAt { get; set; }
-	public string Name { get; set; }
-	public string Comment { get; set; }
+	public string Name { get; set; } = string.Empty;
+	public string Comment { get; set; } = string.Empty;
 	public Contractor? Contractor { get; set; }
 
 	public int ElapsedTimePartId { get; set; }
@@ -14,6 +14,11 @@ public class ActiveGoal
 	public TimeSpan ElapsedTime { get; set; }
 	public bool ShowParts { get; set; }
 	public bool Tick { get; set; }
+
+	public ActiveGoal()
+	{
+
+	}
 
 	public ActiveGoal(Goal source)
 	{
