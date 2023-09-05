@@ -54,6 +54,8 @@ public static class AppServiceRegistration
     private static IServiceCollection AddEventServices(this IServiceCollection services)
     {
         // add custom events here
+        services.AddTransient<RemoveGoalElapsedPart>();
+        services.AddTransient<UpdateGoal>();
         services.AddTransient<EmailNewUser>();
         return services;
     }

@@ -1,0 +1,151 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Planner.Application.Events
+@using Planner.Hubs
+@inject ContractorsRepository ContractorsRepository
+@inject GoalsRepository GoalsRepository
+@inject NavigationManager NavigationManager
+@inject IDispatcher Dispatcher
+@implements IAsyncDisposable
+
+<section>
+	<MudForm Model="HeaderModel">
+		<MudTextField T="string" Label="Name" @bind-Value="HeaderModel.Name" Immediate Clearable Variant="Variant.Filled" Lines="2" />
+		<MudSelect T="Contractor" Label="Contractor" @bind-Value="HeaderModel.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+			<MudSelectItem Value="Contractor.Empty" />
+			@foreach (var item in Contractors)
+			{
+				<MudSelectItem Value="item" />
+			}
+		</MudSelect>
+
+		<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Clearable Lines="5" Variant="Variant.Filled" />
+
+		<div class="mt-2">
+			<MudButton Variant="Variant.Filled" OnClick="Update">Save</MudButton>
+			<MudButton Variant="Variant.Filled" OnClick="Clear">Clear</MudButton>
+		</div>
+	</MudForm>
+
+	<MudCard Elevation="0">
+		<MudCardContent Class="pa-0">
+			<MudTable Items="@ElapsedTimeParts" Context="Part" Dense Breakpoint="Breakpoint.None" Elevation="0">
+				<HeaderContent>
+					<MudTh>Elapsed time</MudTh>
+					<MudTh>Comment</MudTh>
+					<MudTh></MudTh>
+				</HeaderContent>
+				<RowTemplate>
+					<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(@"hh\:mm\:ss")</MudTd>
+					<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
+					<MudTd>
+						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)" />
+					</MudTd>
+				</RowTemplate>
+			</MudTable>
+		</MudCardContent>
+	</MudCard>
+</section>
+
+	@code {
+	[Parameter]
+	public Goal? Goal { get; set; }
+	[CascadingParameter]
+	public MainLayout? Layout { get; set; }
+
+	private HubConnection? _hubConnection;
+
+	private User? User => Layout?.User;
+
+	private GoalHeaderModel HeaderModel { get; set; } = new();
+	private List<GoalElapsedTimePart> ElapsedTimeParts { get; set; } = new();
+	public List<Contractor> Contractors { get; set; } = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		Contractors = await ContractorsRepository.List();
+
+		_hubConnection = new HubConnectionBuilder()
+			.WithUrl(NavigationManager.ToAbsoluteUri("/hubs/timers"))
+			.Build();
+		_hubConnection.On<int, int, int>(nameof(ITimers.GoalElapsedTimePartRemoved), (userId, id, elapsedTimePartId) =>
+		{
+			if (User?.Id != userId) return;
+			if (Goal is null || Goal.Id != id) return;
+
+			var part = ElapsedTimeParts.FirstOrDefault(x => x.Id == elapsedTimePartId);
+			if (part is null) return;
+			if (ElapsedTimeParts.Remove(part))
+			{
+				Goal.ElapsedTimeParts.Remove(part);
+				InvokeAsync(StateHasChanged);
+			}
+		});
+		_hubConnection.On<int, ActiveGoal>(nameof(ITimers.GoalChanged), (userId, data) =>
+		{
+			if (User?.Id != userId) return;
+			if (Goal is null || Goal.Id != data.Id) return;
+			HeaderModel.Name = data.Name;
+			HeaderModel.Comment = data.Comment;
+			HeaderModel.Contractor = data.Contractor;
+			InvokeAsync(StateHasChanged);
+		});
+		await _hubConnection.StartAsync();
+	}
+
+	protected override void OnParametersSet()
+	{
+		if (Goal is not null)
+		{
+			HeaderModel.Name = Goal.Name;
+			HeaderModel.Contractor = Goal.Contractor;
+			HeaderModel.Comment = Goal.Comment;
+			ElapsedTimeParts.Clear();
+			ElapsedTimeParts.AddRange(Goal.ElapsedTimeParts);
+		}
+		else Clear();
+	}
+
+
+	private async Task Update()
+	{
+		await Dispatcher.Broadcast(new GoalChanged()
+		{
+			Id = Goal!.Id,
+			Name = HeaderModel.Name,
+			Contractor = HeaderModel.Contractor,
+			Comment = HeaderModel.Comment,
+			UserId = User!.Id,
+			UpdatedAt = DateTime.Now
+		});
+	}
+
+	public void Clear()
+	{
+		HeaderModel.Name = string.Empty;
+		HeaderModel.Contractor = null;
+		HeaderModel.Comment = string.Empty;
+		ElapsedTimeParts.Clear();
+	}
+
+	private async Task Destroy(GoalElapsedTimePart entity)
+	{
+		await Dispatcher.Broadcast(new GoalElapsedPartRemoved()
+		{
+			Id = entity.Id,
+			GoalId = entity.Goal.Id,
+			UserId = User!.Id
+		});
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		if (_hubConnection is not null) await _hubConnection.DisposeAsync();
+	}
+
+	private class GoalHeaderModel
+	{
+		public string Name { get; set; } = string.Empty;
+		public Contractor? Contractor { get; set; }
+		public string Comment { get; set; } = string.Empty;
+	}
+}

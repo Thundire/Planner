@@ -12,9 +12,9 @@ public static class Events
         IEventRegistration registration = services.ConfigureEvents();
 
         // add events and listeners here
-        registration
-            .Register<UserCreated>()
-            .Subscribe<EmailNewUser>();
+        registration.Register<UserCreated>().Subscribe<EmailNewUser>();
+        registration.Register<GoalChanged>().Subscribe<UpdateGoal>();
+        registration.Register<GoalElapsedPartRemoved>().Subscribe<RemoveGoalElapsedPart>();
 
         return services;
     }

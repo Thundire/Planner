@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Planner.Application.Database;
+using Planner.Application.Events;
 using Planner.Application.Models;
 
 namespace Planner.Application.Services;
@@ -47,44 +48,6 @@ public class GoalsRepository
 	    else
 	    {
 		    existed.Copy(data, true);
-		    //  var leftOuterJoin =
-		    //   from outer in existed.ElapsedTimeParts
-		    //   join inner in startData.ElapsedTimeParts on outer.Id equals inner.Id into temp
-		    //   from inner in temp.DefaultIfEmpty()
-		    //   select new
-		    //   {
-		    //    Outer    = outer,
-		    //    Inner    = inner,
-		    //    ToDelete = inner is null,
-		    //    ToIgnore = inner is not null,
-		    //    ToAdd    = false,
-		    //   };
-		    //  var rightOuterJoin =
-		    //   from inner in startData.ElapsedTimeParts
-		    //join outer in existed.ElapsedTimeParts on inner.Id equals outer.Id into temp
-		    //   from outer in temp.DefaultIfEmpty()
-		    //   select new
-		    //   {
-		    //    Outer    = outer,
-		    //    Inner    = inner,
-		    //    ToDelete = false,
-		    //    ToIgnore = outer is not null,
-		    //    ToAdd    = outer is null,
-		    //   };
-		    //  var join = leftOuterJoin.Union(rightOuterJoin).ToArray();
-		    //  foreach (var result in join)
-		    //  {
-		    //   switch (result.ToAdd, result.ToDelete)
-		    //   {
-		    //    case (true, false):
-		    //	    context.GoalElapsedTimeParts.Attach(result.Inner);
-		    //	    existed.ElapsedTimeParts.Add(result.Inner);
-		    //	    break;
-		    //    case (false, true):
-		    //	    existed.ElapsedTimeParts.Remove(result.Outer);
-		    //	    break;
-		    //   }
-		    //  }
 	    }
 
 	    if (!Equals(existed.Contractor, data.Contractor))
@@ -151,23 +114,24 @@ public class GoalsRepository
 		return elapsedTimePart;
 	}
 
-    public async Task Remove(GoalElapsedTimePart data)
+    public async Task Remove(int id)
     {
 	    await using DatabaseContext context = await _factory.CreateDbContextAsync();
-	    context.Attach(data);
-	    context.Remove(data);
+	    var elapsedTimePart = await context.GoalElapsedTimeParts.FindAsync(id);
+		if(elapsedTimePart is null) return;
+		context.Remove(elapsedTimePart);
 	    await context.SaveChangesAsync();
 	}
 
-    public async Task Update(ActiveGoal goal)
+    public async Task Update(GoalChanged data)
 	{
 		await using DatabaseContext context = await _factory.CreateDbContextAsync();
-		var existed = await context.Goals.FindAsync(goal.Id);
+		var existed = await context.Goals.FindAsync(data.Id);
 		if (existed is null) throw new InvalidOperationException("Not found goal");
-		existed.Name       = goal.Name;
-		existed.Contractor = Equals(goal.Contractor, Contractor.Empty) ? null : goal.Contractor;
-		existed.Comment    = goal.Comment;
-		existed.UpdatedAt  = DateTime.UtcNow;
+		existed.Name       = data.Name;
+		existed.Contractor = data.Contractor;
+		existed.Comment    = data.Comment;
+		existed.UpdatedAt  = data.UpdatedAt;
 		await context.SaveChangesAsync();
 	}
 }

@@ -1,10 +1,12 @@
 ﻿@page "/dashboard"
 @using Microsoft.AspNetCore.SignalR.Client
+@using Planner.Application.Events
 @using Planner.Hubs
 @attribute [Authorize]
 @inject GoalsRepository GoalsRepository
 @inject ContractorsRepository ContractorsRepository
 @inject NavigationManager NavigationManager
+@inject IDispatcher Dispatcher
 @implements IAsyncDisposable
 
 <PageTitle>Dashboard</PageTitle>
@@ -13,95 +15,59 @@
 	<MudPaper Class="p-4">
 		<MudStack Row>
 			<MudTextField T="string" Label="Name" @bind-Value="GoalName" Clearable />
-				<MudButton Variant="Variant.Filled" OnClick="Store">Add</MudButton>
-			</MudStack>
-		</MudPaper>
+			<MudButton Variant="Variant.Filled" OnClick="Store">Add</MudButton>
+		</MudStack>
+	</MudPaper>
 
-		<MudTable class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
-					  CanCancelEdit RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
-			<ColGroup>
-				<col />
-				<col />
-				<col style="width: 50%;" />
-				<col />
-			</ColGroup>
-			<HeaderContent>
-				<MudTh>Contractor</MudTh>
-				<MudTh>Elapsed</MudTh>
-				<MudTh>Name</MudTh>
-			</HeaderContent>
-			<RowTemplate>
-				<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
-				<MudTd DataLabel="Elapsed">@context.ElapsedTimeTotal.ToString(@"hh\:mm")</MudTd>
-				<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
-				<MudTd DataLabel="Buttons">
-					<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
-						<MudText Typo="Typo.button" Style="line-height: 20px">@context.ElapsedTime.ToString(@"hh\:mm\:ss")</MudText>
-						<MudToggleIconButton ToggledChanged="e => SwitchTimer(e, context)" Toggled="@context.Tick" Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop" />
-						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(context)" />
-						<MudIconButton Icon="@Icons.Material.Filled.OpenInNew" @onclick="() => Details(context)" />
-					</MudStack>
-				</MudTd>
-			</RowTemplate>
-			<RowEditingTemplate>
-				<MudTd DataLabel="Contractor">
-					<MudSelect T="Contractor" Label="Contractor" @bind-Value="context.Contractor" Dense Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
-						<MudSelectItem Value="Contractor.Empty" />
-						@foreach (var item in Contractors)
+	<MudTable class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
+	          CanCancelEdit RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
+		<ColGroup>
+			<col />
+			<col />
+			<col style="width: 50%;" />
+			<col />
+		</ColGroup>
+		<HeaderContent>
+			<MudTh>Contractor</MudTh>
+			<MudTh>Elapsed</MudTh>
+			<MudTh>Name</MudTh>
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
+			<MudTd DataLabel="Elapsed">@context.ElapsedTimeTotal.ToString(@"hh\:mm")</MudTd>
+			<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
+			<MudTd DataLabel="Buttons">
+				<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
+					<MudText Typo="Typo.button" Style="line-height: 20px">@context.ElapsedTime.ToString(@"hh\:mm\:ss")</MudText>
+					<MudToggleIconButton ToggledChanged="e => SwitchTimer(e, context)" Toggled="@context.Tick" Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop" />
+					<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(context)" />
+					<MudIconButton Icon="@Icons.Material.Filled.OpenInNew" @onclick="() => Details(context)" />
+				</MudStack>
+			</MudTd>
+		</RowTemplate>
+		<RowEditingTemplate>
+			<MudTd DataLabel="Contractor">
+				<MudSelect T="Contractor" Label="Contractor" @bind-Value="context.Contractor" Dense Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+					<MudSelectItem Value="Contractor.Empty"/>
+					@foreach (var item in Contractors)
 					{
-						<MudSelectItem Value="item" />
+						<MudSelectItem Value="item"/>
 					}
 				</MudSelect>
 			</MudTd>
 			<MudTd DataLabel="ElapsedTime">@context.ElapsedTimeTotal.ToString(@"hh\:mm")</MudTd>
 			<MudTd DataLabel="Name">
 				<MudTextField T="string" Label="Name" @bind-Value="context.Name" Immediate Clearable Variant="Variant.Filled" />
-				</MudTd>
-			</RowEditingTemplate>
-		</MudTable>
-	</section>
+			</MudTd>
+		</RowEditingTemplate>
+	</MudTable>
+</section>
 
-	<MudDrawer @bind-Open="DrawerOpen" Anchor="Anchor.End" Elevation="1" Variant="DrawerVariant.Temporary" Width="30rem">
-		<MudForm Model="Goal">
-			<MudTextField T="string" Label="Name" @bind-Value="Goal.Name" Immediate Clearable Variant="Variant.Filled" Lines="2" />
-			<MudSelect T="Contractor" Label="Contractor" @bind-Value="Goal.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
-				<MudSelectItem Value="Contractor.Empty" />
-				@foreach (var item in Contractors)
-			{
-				<MudSelectItem Value="item" />
-			}
-		</MudSelect>
+<MudDrawer @bind-Open="DrawerOpen" Anchor="Anchor.End" Elevation="1" Variant="DrawerVariant.Temporary" Width="30rem">
+		<GoalEditForm @ref="_goalEditForm" Goal="Goal" />
+</MudDrawer>
 
-		<MudTextField T="string" Label="Comment" @bind-Value="Goal.Comment" Clearable Lines="5" Variant="Variant.Filled" />
-
-			<div class="mt-2">
-				<MudButton Variant="Variant.Filled" OnClick="StoreOrUpdate">Save</MudButton>
-				<MudButton Variant="Variant.Filled" OnClick="Clear">Clear</MudButton>
-			</div>
-		</MudForm>
-
-		<MudCard Elevation="0">
-			<MudCardContent Class="pa-0">
-				<MudTable Items="@Goal.ElapsedTimeParts" Context="Part" Dense Breakpoint="Breakpoint.None" Elevation="0">
-					<HeaderContent>
-						<MudTh>Elapsed time</MudTh>
-						<MudTh>Comment</MudTh>
-						<MudTh></MudTh>
-					</HeaderContent>
-					<RowTemplate>
-						<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(@"hh\:mm\:ss")</MudTd>
-						<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
-						<MudTd>
-							<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)" />
-						</MudTd>
-					</RowTemplate>
-				</MudTable>
-			</MudCardContent>
-		</MudCard>
-	</MudDrawer>
-
-	@code
-	{
+@code {
 	private HubConnection? _hubConnection;
 
 	[CascadingParameter]
@@ -115,9 +81,12 @@
 
 	private GoalRowEditForm _goalBackup = new();
 	private bool DrawerOpen { get; set; }
+	private GoalEditForm? _goalEditForm;
 
 	protected override async Task OnInitializedAsync()
 	{
+		Contractors = await ContractorsRepository.List();
+
 		_hubConnection = new HubConnectionBuilder()
 			.WithUrl(NavigationManager.ToAbsoluteUri("/hubs/timers"))
 			.Build();
@@ -129,23 +98,27 @@
 			goal.ElapsedTime = elapsedTime;
 			InvokeAsync(StateHasChanged);
 		});
-		_hubConnection.On<int, ActiveGoal>(nameof(ITimers.GoalChanged), UpdateGoal);
-
-		Contractors = await ContractorsRepository.List();
-
-		await _hubConnection.StartAsync();
-	}
-
-		private void UpdateGoal(int userId, ActiveGoal data)
+		_hubConnection.On<int, ActiveGoal>(nameof(ITimers.GoalChanged), (userId, data) =>
 		{
 			if (User?.Id != userId) return;
 			ActiveGoal? goal = Goals.Find(x => x.Id == data.Id);
 			if (goal is null) return;
 			goal.Copy(data);
 			InvokeAsync(StateHasChanged);
-		}
+		});
+		_hubConnection.On<int, int, TimeSpan>(nameof(ITimers.GoalTimeChanged), (userId, goalId, time) =>
+		{
+			if (User?.Id != userId) return;
+			ActiveGoal? goal = Goals.Find(x => x.Id == goalId);
+			if (goal is null) return;
+			goal.ElapsedTimeTotal = time;
+			InvokeAsync(StateHasChanged);
+		});
 
-		protected override async Task OnAfterRenderAsync(bool firstRender)
+		await _hubConnection.StartAsync();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
@@ -154,89 +127,24 @@
 			StateHasChanged();
 		}
 	}
-
-	private async Task StoreOrUpdate()
-	{
-		var contractorFilled = Goal.Contractor is not null && Goal.Contractor.Id != Contractor.Empty.Id;
-		Goal data = new()
-			{
-				Id = Goal.Id,
-				Contractor = contractorFilled ? Goal.Contractor : null,
-				Name = Goal.Name,
-				Comment = Goal.Comment
-			};
-
-		var isCreating = Goal.Id == 0;
-
-
-		if (isCreating)
-		{
-			data.User = User;
-			data.CreatedAt = DateTime.UtcNow;
-		}
-		else
-		{
-			data.CreatedAt = Goal.CreatedAt;
-			data.UpdatedAt = DateTime.UtcNow;
-		}
-
-		var saved = await GoalsRepository.StoreOrUpdate(data);
-
-		if (isCreating)
-		{
-			Clear();
-			Goals.Insert(0, new ActiveGoal(saved));
-		}
-		else
-		{
-			var existed = Goals.FirstOrDefault(x => x.Id == saved.Id);
-			if (existed is not null)
-			{
-				existed.Copy(saved);
-			}
-		}
-	}
-
+	
 	private async Task Destroy(ActiveGoal entity)
 	{
 		await GoalsRepository.Destroy(entity.Id);
 		Goals.Remove(entity);
-		if (Goal.Id == entity.Id) Clear();
+		if (Goal?.Id == entity.Id)
+		{
+			DrawerOpen = false;
+			Goal = null;
+		}
 	}
 
-	private void Clear()
-	{
-		Goal = new();
-	}
 
 	private void ShowBtnPress(ActiveGoal context)
 	{
 		context.ShowParts = !context.ShowParts;
 	}
-
-	private async Task Destroy(GoalElapsedTimePart entity)
-	{
-		await GoalsRepository.Remove(entity);
-		Goal.ElapsedTimeParts.Remove(entity);
-	}
-
-	private class GoalRowEditForm
-	{
-		public ActiveGoal? Source { get; set; }
-		public int Id { get; set; }
-		public Contractor? Contractor { get; set; }
-		public string Name { get; set; } = string.Empty;
-		public string Comment { get; set; } = string.Empty;
-
-		public void Fill(ActiveGoal data)
-		{
-			Id = data.Id;
-			Contractor = data.Contractor;
-			Name = data.Name;
-			Comment = data.Comment;
-		}
-	}
-
+	
 	public async ValueTask DisposeAsync()
 	{
 		if (_hubConnection is not null) await _hubConnection.DisposeAsync();
@@ -251,7 +159,15 @@
 	private async void CommitRowEdit(object item)
 	{
 		if (item is not ActiveGoal goal) return;
-		await GoalsRepository.Update(goal);
+		await Dispatcher.Broadcast(new GoalChanged()
+		{
+				Id = goal.Id,
+				Name = goal.Name,
+				Contractor = goal.Contractor,
+				Comment = goal.Comment,
+				UserId = User!.Id,
+				UpdatedAt = DateTime.Now
+		});
 	}
 	private void BackupRowEdit(object item)
 	{
@@ -286,5 +202,22 @@
 	{
 		Goal = await GoalsRepository.OneFull(context.Id, User!.Id);
 		DrawerOpen = true;
+	}
+
+	private class GoalRowEditForm
+	{
+		public ActiveGoal? Source { get; set; }
+		public int Id { get; set; }
+		public Contractor? Contractor { get; set; }
+		public string Name { get; set; } = string.Empty;
+		public string Comment { get; set; } = string.Empty;
+
+		public void Fill(ActiveGoal data)
+		{
+			Id = data.Id;
+			Contractor = data.Contractor;
+			Name = data.Name;
+			Comment = data.Comment;
+		}
 	}
 }

@@ -50,4 +50,6 @@ public interface ITimers
 	Task ActivateTimer(int id, int userId, DateTime startTime);
 	Task StopTimer(int id, int userId);
 	Task GoalChanged(int userId, ActiveGoal goal);
+	Task GoalElapsedTimePartRemoved(int userId, int goalId, int elapsedTimePartId);
+	Task GoalTimeChanged(int userId, int goalId, TimeSpan timeTotal);
 }
