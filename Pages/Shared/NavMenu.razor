@@ -8,6 +8,9 @@
 			</li>
 		</ul>
 		<ul class="flex-wrap items-center w-auto hidden md:flex space-x-4">
+			<MudTooltip Duration="1000" Text="@(DarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme")">
+				<MudIconButton Icon="@(DarkTheme ? @Icons.Material.Rounded.LightMode : @Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ChangeTheme" />
+			</MudTooltip>
 			<AuthorizeView>
 				<Authorized>
 					<div>
@@ -51,6 +54,9 @@
 	</div>
 	<div x-cloak x-show="mobileMenuOpen" class="lg:hidden bg-white drop-shadow-lg z-50 mb-12" id="mobile-menu">
 		<div class="py-3 space-y-1 px-4 md:px-12">
+			<MudTooltip Duration="1000" Text="@(DarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme")">
+				<MudIconButton Icon="@(DarkTheme ? @Icons.Material.Rounded.LightMode : @Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ChangeTheme" />
+			</MudTooltip>
 			<AuthorizeView>
 				<Authorized>
 					<a x-on:click="mobileMenuOpen = false" class="text-gray-600 hover:bg-gray-100 hover:text-black block px-4 py-2 font-medium" href="/contractors/management">Contractors</a>
@@ -74,4 +80,13 @@
 	public MainLayout? Layout { get; set; }
 	private User? User => Layout?.User;
 	private string UserName => User?.Name ?? string.Empty;
+
+	private bool DarkTheme => Layout?.DarkTheme ?? false;
+	[Parameter]
+	public EventCallback<bool> OnThemeChanged { get; set; }
+
+	private async Task ChangeTheme()
+	{
+		if (OnThemeChanged.HasDelegate) await OnThemeChanged.InvokeAsync(!DarkTheme);
+	}
 }

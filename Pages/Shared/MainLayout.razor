@@ -1,17 +1,16 @@
 ﻿@inherits LayoutComponentBase
 
 @inject AuthService AuthService
-@inject IConfiguration Config
 
-<PageTitle>@AppName</PageTitle>
+<PageTitle>@Env.Get("APP_NAME")</PageTitle>
 
-<MudThemeProvider />
+<MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="DarkTheme" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <CascadingValue Value="this">
 	<MudLayout>
-		<NavMenu />
+		<NavMenu OnThemeChanged="SetThemeMode"/>
 		<MudMainContent class="container px-6 max-w-6xl mx-auto py-12">
 			@Body
 		</MudMainContent>
@@ -24,7 +23,10 @@
 	public Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 	public User? User = new();
 
-	public string AppName = "";
+	[CascadingParameter]
+	public bool DarkTheme { get; set; }
+
+	private MudThemeProvider _mudThemeProvider = null!;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -34,7 +36,21 @@
 		{
 			User = await AuthService.GetAuthenticatedUser();
 		}
+	}
+	
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await base.OnAfterRenderAsync(firstRender);
 
-		AppName = Config.GetValue<string>("Spark:App:Name") ?? string.Empty;
+		if (firstRender)
+		{
+			DarkTheme = await _mudThemeProvider.GetSystemPreference();
+			StateHasChanged();
+		}
+	}
+
+	private void SetThemeMode(bool darkMode)
+	{
+		DarkTheme = darkMode;
 	}
 }
