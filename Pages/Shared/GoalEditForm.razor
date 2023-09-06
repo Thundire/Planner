@@ -7,7 +7,7 @@
 @inject IDispatcher Dispatcher
 @implements IAsyncDisposable
 
-<section class="p-4" style="height: calc(100%);">
+<MudContainer Class="px-4 py-4" style="height: calc(100%);">
 	<MudButtonGroup Variant="Variant.Filled" Size="Size.Large">
 			<MudButton OnClick="Update">Save</MudButton>
 			<MudButton OnClick="Clear">Clear</MudButton>
@@ -25,9 +25,9 @@
 			</MudSelect>
 
 
-			<MudStack Class="mt-2">
+			<MudStack Class="mt-2 relative">
 
-			<MudToggleIconButton @bind-Toggled="IsEditMarkdown" Class="place-self-end absolute z-50 mt-2" ToggledSize="Size.Medium" Variant="Variant.Text" Size="Size.Medium" Icon="@Icons.Material.Filled.RemoveRedEye" ToggledIcon="@Icons.Material.Outlined.RemoveRedEye" />
+			<MudToggleIconButton @bind-Toggled="IsEditMarkdown" Class="z-50 mt-2" Style="Position: absolute!important; right: 1rem;" ToggledSize="Size.Medium" Variant="Variant.Text" Size="Size.Medium" Icon="@Icons.Material.Filled.RemoveRedEye" ToggledIcon="@Icons.Material.Outlined.RemoveRedEye" />
 				@if (IsEditMarkdown)
 				{
 					<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Immediate Clearable Lines="14" Variant="Variant.Filled"/>
@@ -61,7 +61,7 @@
 		</MudPaper>
 	}
 	
-	</section>
+	</MudContainer>
 
 	@code {
 	[Parameter]

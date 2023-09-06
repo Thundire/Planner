@@ -11,10 +11,10 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<section class="mx-auto max-w-6xl mb-20">
+<MudContainer Class="mt-4">
 	<MudPaper Class="p-4">
 		<MudStack Row>
-			<MudTextField T="string" Label="Name" @bind-Value="GoalName" Clearable />
+			<MudTextField Class="pl-2" T="string" Label="Name" @bind-Value="GoalName" Clearable />
 			<MudButton Variant="Variant.Filled" OnClick="Store">Add</MudButton>
 		</MudStack>
 	</MudPaper>
@@ -61,7 +61,7 @@
 			</MudTd>
 		</RowEditingTemplate>
 	</MudTable>
-</section>
+</MudContainer>
 
 <MudDrawer @bind-Open="DrawerOpen" Anchor="Anchor.End" Elevation="1" Variant="DrawerVariant.Temporary" Width="40rem">
 		<GoalEditForm @ref="_goalEditForm" Goal="Goal" />

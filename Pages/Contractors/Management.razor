@@ -4,54 +4,44 @@
 
 <PageTitle>Contractors</PageTitle>
 
-<section class="mx-auto max-w-6xl mb-20">
-	<article class="bg-white shadow rounded-lg w-full my-12 p-6">
-		<h2 class="text-xl font-medium mb-2">
-			Contractor
-		</h2>
+<MudContainer Class="mt-4 mb-20">
+	<MudPaper Class="px-4 py-4">
+		<MudText Typo="Typo.h4">Contractor</MudText>
 		<EditForm Model="Contractor" OnValidSubmit="StoreOrUpdate" class="max-w-2xl flex flex-col space-y-6">
 			<div class="mb-1 text-red-500 text-sm">
 				<DataAnnotationsValidator />
 				<ValidationSummary />
 			</div>
-			<div>
-				<label for="name" class="block font-medium text-sm text-gray-700">Name</label>
-				<div class="mt-1">
-					<InputText @bind-Value="Contractor.Name" id="name" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" />
-				</div>
-				<div class="mt-1 text-red-500 text-sm">
-					<ValidationMessage For="() => Contractor.Name" />
-				</div>
-			</div>
 			
-			<div>
-				<button type="submit" class="text-left px-4 py-2 bg-indigo-700 hover:bg-indigo-800 rounded-md font-semibold text-xs text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">
-					Save
-				</button>
-				<button type="reset" class="text-left px-4 py-2 bg-indigo-700 hover:bg-indigo-800 rounded-md font-semibold text-xs text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">
-					Clear
-				</button>
-			</div>
+			<MudTextField T="string" @bind-Value="Contractor.Name" Label="Name" For="() => Contractor.Name" />
+
+			<MudButtonGroup Class="mt-4" Variant="Variant.Outlined">
+				<MudButton ButtonType="ButtonType.Submit">Save</MudButton>
+				<MudButton ButtonType="ButtonType.Reset">Clear</MudButton>
+			</MudButtonGroup>
 		</EditForm>
-	</article>
+	</MudPaper>
 	
 	
-	<article class="bg-white shadow rounded-lg w-full my-12 p-6">
-		<h2 class="text-xl font-medium mb-2">
-			Contractors
-		</h2>
+	<MudPaper Class="mt-12 px-4 py-4">
+		<MudText Typo="Typo.h4">Contractors</MudText>
 		
-		@foreach (var item in Contractors)
-		{
-			<div class="grid grid-cols-3 gap-4 hover:bg-gray-200 rounded-md my-2 pl-3">
-				<div class="col-span-2" @onclick="() => Select(item)">@item.Name</div>
-				<div class="col-start-3 col-end-3 inline-grid">
-					<button type="button" class="place-self-end w-1/2 px-4 py-2 bg-red-700 hover:bg-red-800 rounded-md font-semibold text-xs text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition" @onclick="() => Destroy(item)">Delete</button>
-				</div>
-			</div>
-		}
-	</article>
-</section>
+		<MudTable T="Contractor" Items="@Contractors" FixedHeader Dense OnRowClick="Select" Breakpoint="Breakpoint.None">
+			<HeaderContent>
+				<MudTh>Name</MudTh>
+				<MudTh></MudTh>
+			</HeaderContent>
+			<RowTemplate>
+				<MudTd DataLabel="Name">@context.Name</MudTd>
+				<MudTd>
+					<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
+						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(context)" />
+					</MudStack>
+				</MudTd>
+			</RowTemplate>
+		</MudTable>
+	</MudPaper>
+</MudContainer>
 
 @code
 {
@@ -102,8 +92,9 @@
 		Contractor = new();
 	}
 
-	private void Select(Contractor entity)
+	private void Select(TableRowClickEventArgs<Contractor> args)
 	{
-		Contractor.Copy(entity);
+		if(args.Item is not null)
+			Contractor.Copy(args.Item);
 	}
 }
