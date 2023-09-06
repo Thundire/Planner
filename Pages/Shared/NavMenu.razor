@@ -2,7 +2,7 @@
 	<MudButton Href="/"><ApplicationLogo /></MudButton>
 	<MudSpacer />
 	<MudTooltip Duration="1000" Text="@(DarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme")">
-		<MudIconButton Icon="@(DarkTheme ? @Icons.Material.Rounded.LightMode : @Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ChangeTheme" />
+		<MudIconButton Icon="@(DarkTheme ? @Icons.Material.Rounded.LightMode : @Icons.Material.Outlined.DarkMode)" Color="@(DarkTheme ? Color.Inherit : Color.Dark)" OnClick="ChangeTheme" />
 	</MudTooltip>
 	<MudButton Href="/contractors/management">Contractors</MudButton>
 	<AuthorizeView>
