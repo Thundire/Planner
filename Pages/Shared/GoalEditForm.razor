@@ -7,29 +7,44 @@
 @inject IDispatcher Dispatcher
 @implements IAsyncDisposable
 
-<section class="p-4">
-	<MudForm Model="HeaderModel">
-		<MudTextField T="string" Label="Name" @bind-Value="HeaderModel.Name" Immediate Clearable Variant="Variant.Filled" Lines="2" />
-		<MudSelect T="Contractor" Label="Contractor" @bind-Value="HeaderModel.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
-			<MudSelectItem Value="Contractor.Empty" />
-			@foreach (var item in Contractors)
-			{
-				<MudSelectItem Value="item" />
-			}
-		</MudSelect>
+<section class="p-4" style="height: calc(100%);">
+	<MudButtonGroup Variant="Variant.Filled" Size="Size.Large">
+			<MudButton OnClick="Update">Save</MudButton>
+			<MudButton OnClick="Clear">Clear</MudButton>
+		<MudButton OnClick="ShowTimeParts">Times</MudButton>
+	</MudButtonGroup>
 
-		<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Immediate Clearable Lines="5" Variant="Variant.Filled" />
-		<MudMarkdown Value="@HeaderModel.Comment" />
+		<MudForm Model="HeaderModel">
+			<MudTextField T="string" Label="Name" @bind-Value="HeaderModel.Name" Immediate Clearable Variant="Variant.Filled" Lines="2"/>
+			<MudSelect T="Contractor" Label="Contractor" @bind-Value="HeaderModel.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+				<MudSelectItem Value="Contractor.Empty"/>
+				@foreach (var item in Contractors)
+				{
+					<MudSelectItem Value="item"/>
+				}
+			</MudSelect>
 
-		<div class="mt-2">
-			<MudButton Variant="Variant.Filled" OnClick="Update">Save</MudButton>
-			<MudButton Variant="Variant.Filled" OnClick="Clear">Clear</MudButton>
-		</div>
-	</MudForm>
 
-	<MudCard Elevation="0">
-		<MudCardContent Class="pa-0">
-			<MudTable Items="@ElapsedTimeParts" Context="Part" Dense Breakpoint="Breakpoint.None" Elevation="0">
+			<MudStack Class="mt-2">
+
+			<MudToggleIconButton @bind-Toggled="IsEditMarkdown" Class="place-self-end absolute z-50 mt-2" ToggledSize="Size.Medium" Variant="Variant.Text" Size="Size.Medium" Icon="@Icons.Material.Filled.RemoveRedEye" ToggledIcon="@Icons.Material.Outlined.RemoveRedEye" />
+				@if (IsEditMarkdown)
+				{
+					<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Immediate Clearable Lines="14" Variant="Variant.Filled"/>
+				}
+				else
+				{
+					<MudPaper Elevation="1" MinHeight="19rem">
+						<MudMarkdown Value="@HeaderModel.Comment"/>
+					</MudPaper>
+				}
+			</MudStack>
+		</MudForm>
+		
+	@if (ShowTimes)
+	{
+		<MudPaper Class="mt-2 mb-1" Elevation="0" >
+			<MudTable Items="@ElapsedTimeParts" Context="Part" FixedHeader Dense Breakpoint="Breakpoint.None">
 				<HeaderContent>
 					<MudTh>Elapsed time</MudTh>
 					<MudTh>Comment</MudTh>
@@ -39,13 +54,14 @@
 					<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(@"hh\:mm\:ss")</MudTd>
 					<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
 					<MudTd>
-						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)" />
+						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)"/>
 					</MudTd>
 				</RowTemplate>
 			</MudTable>
-		</MudCardContent>
-	</MudCard>
-</section>
+		</MudPaper>
+	}
+	
+	</section>
 
 	@code {
 	[Parameter]
@@ -60,8 +76,11 @@
 	private GoalHeaderModel HeaderModel { get; set; } = new();
 	private List<GoalElapsedTimePart> ElapsedTimeParts { get; set; } = new();
 	public List<Contractor> Contractors { get; set; } = new();
+	private bool IsEditMarkdown { get; set; }
+	private bool ShowTimes { get; set; }
+	private string TimesHeight { get; set; } = "height: 0;";
 
-	protected override async Task OnInitializedAsync()
+		protected override async Task OnInitializedAsync()
 	{
 		Contractors = await ContractorsRepository.List();
 
@@ -103,7 +122,11 @@
 			ElapsedTimeParts.Clear();
 			ElapsedTimeParts.AddRange(Goal.ElapsedTimeParts);
 		}
-		else Clear();
+		else
+		{
+			Clear();
+			ElapsedTimeParts.Clear();
+		}
 	}
 
 
@@ -125,7 +148,6 @@
 		HeaderModel.Name = string.Empty;
 		HeaderModel.Contractor = null;
 		HeaderModel.Comment = string.Empty;
-		ElapsedTimeParts.Clear();
 	}
 
 	private async Task Destroy(GoalElapsedTimePart entity)
@@ -143,6 +165,12 @@
 		if (_hubConnection is not null) await _hubConnection.DisposeAsync();
 	}
 
+		public void ShowTimeParts()
+		{
+			ShowTimes = !ShowTimes;
+		TimesHeight = ShowTimes ? "height: 40rem" : "height: 0";
+		}
+
 	private class GoalHeaderModel
 	{
 		public string Name { get; set; } = string.Empty;
@@ -150,3 +178,5 @@
 		public string Comment { get; set; } = string.Empty;
 	}
 }
+
+	
