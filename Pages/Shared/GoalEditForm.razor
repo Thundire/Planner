@@ -7,7 +7,7 @@
 @inject IDispatcher Dispatcher
 @implements IAsyncDisposable
 
-<section>
+<section class="p-4">
 	<MudForm Model="HeaderModel">
 		<MudTextField T="string" Label="Name" @bind-Value="HeaderModel.Name" Immediate Clearable Variant="Variant.Filled" Lines="2" />
 		<MudSelect T="Contractor" Label="Contractor" @bind-Value="HeaderModel.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
@@ -18,7 +18,8 @@
 			}
 		</MudSelect>
 
-		<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Clearable Lines="5" Variant="Variant.Filled" />
+		<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Immediate Clearable Lines="5" Variant="Variant.Filled" />
+		<MudMarkdown Value="@HeaderModel.Comment" />
 
 		<div class="mt-2">
 			<MudButton Variant="Variant.Filled" OnClick="Update">Save</MudButton>

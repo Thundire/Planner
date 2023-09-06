@@ -7,6 +7,7 @@ using Spark.Library.Database;
 using Spark.Library.Logging;
 using Coravel;
 using Microsoft.AspNetCore.Components.Authorization;
+using MudBlazor;
 using MudBlazor.Services;
 using Spark.Library.Auth;
 using Planner.Application.Jobs;
@@ -33,6 +34,7 @@ public static class AppServiceRegistration
         services.AddEvents();
         services.AddMailer(config);
         services.AddMudServices();
+        services.AddMudMarkdownServices();
 		return services;
     }
 
