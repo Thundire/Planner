@@ -4,12 +4,14 @@
 
 <PageTitle>@Env.Get("APP_NAME")</PageTitle>
 
-<MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="DarkTheme" />
+<MudThemeProvider @ref="_mudThemeProvider" Theme="_themeManager.Theme" @bind-IsDarkMode="DarkTheme" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <CascadingValue Value="this">
 	<MudLayout>
+		<MudThemeManagerButton OnClick="@((e) => OpenThemeManager(true))" />
+		<MudThemeManager Open="_themeManagerOpen" OpenChanged="OpenThemeManager" Theme="_themeManager" ThemeChanged="UpdateTheme" />
 		<NavMenu OnThemeChanged="SetThemeMode"/>
 		<MudMainContent>
 			@Body
@@ -27,6 +29,8 @@
 	public bool DarkTheme { get; set; }
 
 	private MudThemeProvider _mudThemeProvider = null!;
+	private ThemeManagerTheme _themeManager = new ThemeManagerTheme();
+	public bool _themeManagerOpen = false;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -36,6 +40,7 @@
 		{
 			User = await AuthService.GetAuthenticatedUser();
 		}
+		StateHasChanged();
 	}
 	
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -52,5 +57,16 @@
 	private void SetThemeMode(bool darkMode)
 	{
 		DarkTheme = darkMode;
+	}
+
+	void OpenThemeManager(bool value)
+	{
+		_themeManagerOpen = value;
+	}
+
+	void UpdateTheme(ThemeManagerTheme value)
+	{
+		_themeManager = value;
+		StateHasChanged();
 	}
 }
