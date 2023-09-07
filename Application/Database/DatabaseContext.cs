@@ -15,6 +15,9 @@ public class DatabaseContext : DbContext
     public virtual DbSet<Contractor> Contractors { get; set; } = null!;
     public virtual DbSet<Goal> Goals { get; set; } = null!;
     public virtual DbSet<GoalElapsedTimePart> GoalElapsedTimeParts { get; set; } = null!;
+    public virtual DbSet<JobsNotes> JobsNotes { get; set; } = null!;
+    public virtual DbSet<JobsNote> Jobs { get; set; } = null!;
+    public virtual DbSet<UserSettings> UserSettings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -56,5 +59,16 @@ public class DatabaseContext : DbContext
 	        entity.Navigation(x => x.Contractor).AutoInclude();
 	        entity.Navigation(x => x.User).AutoInclude();
         });
-    }
+
+        builder.Entity<UserSettings>(entity =>
+        {
+	        entity.Navigation(x => x.User).AutoInclude();
+        });
+
+
+        builder.Entity<JobsNotes>(entity =>
+        {
+	        entity.Navigation(x => x.User).AutoInclude();
+        });
+	}
 }
