@@ -48,6 +48,7 @@ public static class AppServiceRegistration
 
         services.AddScoped<ContractorsRepository>();
         services.AddScoped<GoalsRepository>();
+        services.AddScoped<UserSettingsRepository>();
         services.AddSingleton<TimeCounter>();
 
         return services;

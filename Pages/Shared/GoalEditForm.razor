@@ -51,7 +51,7 @@
 					<MudTh></MudTh>
 				</HeaderContent>
 				<RowTemplate>
-					<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(@"hh\:mm\:ss")</MudTd>
+						<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudTd>
 					<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
 					<MudTd>
 						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)"/>
@@ -72,6 +72,7 @@
 	private HubConnection? _hubConnection;
 
 	private User? User => Layout?.User;
+	public UserSettings? UserSettings => Layout?.UserSettings;
 
 	private GoalHeaderModel HeaderModel { get; set; } = new();
 	private List<GoalElapsedTimePart> ElapsedTimeParts { get; set; } = new();

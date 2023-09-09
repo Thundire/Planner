@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
 @inject AuthService AuthService
+@inject UserSettingsRepository UserSettingsRepository
 
 <PageTitle>@Env.Get("APP_NAME")</PageTitle>
 
@@ -24,6 +25,7 @@
 	[CascadingParameter]
 	public Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 	public User? User = new();
+	public UserSettings? UserSettings = new();
 
 	[CascadingParameter]
 	public bool DarkTheme { get; set; }
@@ -39,6 +41,10 @@
 		if (authState.User.Identity?.IsAuthenticated is true)
 		{
 			User = await AuthService.GetAuthenticatedUser();
+			if (User is not null)
+			{
+				UserSettings = await UserSettingsRepository.Settings(User);
+			}
 		}
 		StateHasChanged();
 	}

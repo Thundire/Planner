@@ -34,11 +34,11 @@
 		</HeaderContent>
 		<RowTemplate>
 			<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
-			<MudTd DataLabel="Elapsed">@context.ElapsedTimeTotal.ToString(@"hh\:mm")</MudTd>
+			<MudTd DataLabel="Elapsed">@context.ElapsedTimeTotal.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudTd>
 			<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
 			<MudTd DataLabel="Buttons">
 				<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
-					<MudText Typo="Typo.button" Style="line-height: 20px">@context.ElapsedTime.ToString(@"hh\:mm\:ss")</MudText>
+					<MudText Typo="Typo.button" Style="line-height: 20px">@context.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudText>
 					<MudToggleIconButton ToggledChanged="e => SwitchTimer(e, context)" Toggled="@context.Tick" Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop" />
 					<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(context)" />
 					<MudIconButton Icon="@Icons.Material.Filled.OpenInNew" @onclick="() => Details(context)" />
@@ -55,7 +55,7 @@
 					}
 				</MudSelect>
 			</MudTd>
-			<MudTd DataLabel="ElapsedTime">@context.ElapsedTimeTotal.ToString(@"hh\:mm")</MudTd>
+			<MudTd DataLabel="ElapsedTime">@context.ElapsedTimeTotal.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudTd>
 			<MudTd DataLabel="Name">
 				<MudTextField T="string" Label="Name" @bind-Value="context.Name" Immediate Clearable Variant="Variant.Filled" />
 			</MudTd>
@@ -73,6 +73,7 @@
 	[CascadingParameter]
 	public MainLayout? Layout { get; set; }
 	public User? User => Layout?.User;
+	public UserSettings? UserSettings => Layout?.UserSettings;
 
 	private Goal? Goal { get; set; } = new();
 	public List<ActiveGoal> Goals { get; set; } = new();
