@@ -1,8 +1,11 @@
 ﻿@page "/profile/edit"
+@using Org.BouncyCastle.Asn1.Cms
+@using Planner.Application.Events.Listeners
 @attribute [Authorize]
 @inject IDbContextFactory<DatabaseContext> Factory
 @inject NavigationManager NavManager
 @inject UsersService UsersService
+@inject UserSettingsRepository UserSettingsRepository
 
 <PageTitle>Edit Profile</PageTitle>
 
@@ -51,6 +54,21 @@
 				<MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" Class="mt-2">Save</MudButton>
 			</EditForm>
 		</MudPaper>
+
+		<MudPaper Class="mt-4 pa-4" Elevation="2">
+			<MudText Typo="Typo.h3">Update time formatters</MudText>
+			<MudText Typo="Typo.caption">Update your accounts time formatters</MudText>
+
+			<EditForm Model="TimeFormattersForm" OnValidSubmit="UpdateTimeFormatters">
+				<DataAnnotationsValidator />
+
+				<MudTextField T="string" Label="Shorten time formatter" @bind-Value="TimeFormattersForm.TimeFormatter" For="() => TimeFormattersForm.TimeFormatter" InputType="InputType.Text" />
+
+				<MudTextField T="string" Label="Detailed time formatter" @bind-Value="TimeFormattersForm.DetailedTimeFormatter" For="() => TimeFormattersForm.DetailedTimeFormatter" InputType="InputType.Text" />
+
+				<MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" Class="mt-2">Save</MudButton>
+			</EditForm>
+		</MudPaper>
 	</MudStack>
 </MudContainer>
 
@@ -58,10 +76,12 @@
 	[CascadingParameter]
 	public MainLayout? Layout { get; set; }
 	private User? User => Layout?.User;
+	private UserSettings? UserSettings => Layout?.UserSettings;
 	private ProfileInformationFormVM ProfileInformationForm { get; } = new();
 	private string _profileFormMessage = "";
 	private PasswordFormVM PasswordForm { get; } = new();
 	private string _passwordFormMessage = "";
+	private TimeFormattersFormVM TimeFormattersForm { get; } = new();
 
 
 	protected override void OnInitialized()
@@ -69,6 +89,8 @@
 		// get User profile
 		ProfileInformationForm.Name = User!.Name;
 		ProfileInformationForm.Email = User.Email;
+		TimeFormattersForm.TimeFormatter = UserSettings.TimeFormatterValue(UserSettings);
+		TimeFormattersForm.DetailedTimeFormatter = UserSettings.DetailedTimeFormatterValue(UserSettings);
 	}
 
 	private async Task SaveProfileInformation()
@@ -112,6 +134,25 @@
 		NavManager.NavigateTo("profile/edit", true);
 	}
 
+	private async Task UpdateTimeFormatters()
+	{
+		TimeFormattersChanged data = new()
+		{
+			UserId = User!.Id,
+			TimeFormatter = TimeFormattersForm.TimeFormatter,
+			DetailedTimeFormatter = TimeFormattersForm.DetailedTimeFormatter
+		};
+		if (await UserSettingsRepository.UpdateTimeFormatters(data) && Layout?.OnTimeFormattersChanged.HasDelegate is true)
+		{
+			Layout?.OnTimeFormattersChanged.InvokeAsync(data);
+		}
+		else
+		{
+			TimeFormattersForm.TimeFormatter = UserSettings.TimeFormatterValue(UserSettings);
+			TimeFormattersForm.DetailedTimeFormatter = UserSettings.DetailedTimeFormatterValue(UserSettings);
+		}
+	}
+
 	public class ProfileInformationFormVM
 	{
 		[Required]
@@ -129,5 +170,14 @@
 
 		[Required(ErrorMessage = "New Password is required")]
 		public string NewPassword { get; set; } = string.Empty;
+	}
+
+	public class TimeFormattersFormVM
+	{
+		[Required(ErrorMessage = "Shorten time formatter is required")]
+		public string TimeFormatter { get; set; } = string.Empty;
+
+		[Required(ErrorMessage = "Detailed time formatter is required")]
+		public string DetailedTimeFormatter { get; set; } = string.Empty;
 	}
 }

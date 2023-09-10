@@ -31,21 +31,31 @@
 	public bool DarkTheme { get; set; }
 
 	private MudThemeProvider _mudThemeProvider = null!;
-	private ThemeManagerTheme _themeManager = new ThemeManagerTheme();
-	public bool _themeManagerOpen = false;
+	private ThemeManagerTheme _themeManager = new();
+	private bool _themeManagerOpen;
+	[CascadingParameter] 
+	public EventCallback<TimeFormattersChanged> OnTimeFormattersChanged { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
+		OnTimeFormattersChanged = new(this, UpdateTimeFormatters);
 		var authState = await AuthenticationStateTask;
 
-		if (authState.User.Identity?.IsAuthenticated is true)
+		if (authState.User.Identity?.IsAuthenticated is not true)
 		{
-			User = await AuthService.GetAuthenticatedUser();
-			if (User is not null)
-			{
-				UserSettings = await UserSettingsRepository.Settings(User);
-			}
+			StateHasChanged();
+			return;
 		}
+
+		User = await AuthService.GetAuthenticatedUser();
+		if (User is null)
+		{
+			StateHasChanged();
+			return;
+		}
+
+		UserSettings = await UserSettingsRepository.Settings(User);
+
 		StateHasChanged();
 	}
 	
@@ -74,5 +84,12 @@
 	{
 		_themeManager = value;
 		StateHasChanged();
+	}
+
+	void UpdateTimeFormatters(TimeFormattersChanged data)
+	{
+		if (User?.Id != data.UserId || UserSettings is null) return;
+		UserSettings.TimeFormatter = data.TimeFormatter;
+		UserSettings.DetailedTimeFormatter = data.DetailedTimeFormatter;
 	}
 }

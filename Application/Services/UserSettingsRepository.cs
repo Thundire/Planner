@@ -30,15 +30,18 @@ public class UserSettingsRepository
 		return settings;
 	}
 
-	public async Task UpdateTimeFormatters(UserSettings settings)
+	public async Task<bool> UpdateTimeFormatters(TimeFormattersChanged data)
 	{
 		await using DatabaseContext context = await _factory.CreateDbContextAsync();
-		UserSettings? existed = await context.UserSettings.FirstOrDefaultAsync(x => x.Id == settings.Id);
+		UserSettings? existed = await context.UserSettings.FirstOrDefaultAsync(x => x.User != null && x.User.Id == data.UserId);
 		if (existed is not null)
 		{
-			existed.TimeFormatter         = settings.TimeFormatter;
-			existed.DetailedTimeFormatter = settings.DetailedTimeFormatter;
+			existed.TimeFormatter         = data.TimeFormatter;
+			existed.DetailedTimeFormatter = data.DetailedTimeFormatter;
 			await context.SaveChangesAsync();
+			return true;
 		}
+
+		return false;
 	}
 }
