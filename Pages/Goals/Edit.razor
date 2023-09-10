@@ -1,6 +1,8 @@
-﻿@using Microsoft.AspNetCore.SignalR.Client
+﻿@page "/goals/{GoalId:int}/edit"
+@using Microsoft.AspNetCore.SignalR.Client
 @using Planner.Application.Events
 @using Planner.Hubs
+@attribute [Authorize]
 @inject ContractorsRepository ContractorsRepository
 @inject GoalsRepository GoalsRepository
 @inject NavigationManager NavigationManager
@@ -9,79 +11,80 @@
 
 <MudContainer Class="px-4 py-4" style="height: calc(100%);">
 	<MudButtonGroup Variant="Variant.Filled" Size="Size.Large">
-			<MudButton OnClick="Update">Save</MudButton>
-			<MudButton OnClick="Clear">Clear</MudButton>
+		<MudButton OnClick="Update">Save</MudButton>
+		<MudButton OnClick="Clear">Clear</MudButton>
 		<MudButton OnClick="ShowTimeParts">Times</MudButton>
 	</MudButtonGroup>
 
-		<MudForm Model="HeaderModel">
-			<MudTextField T="string" Label="Name" @bind-Value="HeaderModel.Name" Immediate Clearable Variant="Variant.Filled" Lines="2"/>
-			<MudSelect T="Contractor" Label="Contractor" @bind-Value="HeaderModel.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
-				<MudSelectItem Value="Contractor.Empty"/>
+	<MudForm Model="HeaderModel">
+		<MudTextField T="string" Label="Name" @bind-Value="HeaderModel.Name" Immediate Clearable Variant="Variant.Filled" Lines="2" />
+		
+		<MudSelect T="Contractor" Label="Contractor" @bind-Value="HeaderModel.Contractor" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+				<MudSelectItem Value="Contractor.Empty" />
 				@foreach (var item in Contractors)
-				{
-					<MudSelectItem Value="item"/>
-				}
-			</MudSelect>
+			{
+				<MudSelectItem Value="item" />
+			}
+		</MudSelect>
 
 
-			<MudStack Class="mt-2 relative">
+		<MudStack Class="mt-2 relative">
 
 			<MudToggleIconButton @bind-Toggled="IsEditMarkdown" Class="z-50 mt-2" Style="Position: absolute!important; right: 1rem;" ToggledSize="Size.Medium" Variant="Variant.Text" Size="Size.Medium" Icon="@Icons.Material.Filled.RemoveRedEye" ToggledIcon="@Icons.Material.Outlined.RemoveRedEye" />
-				@if (IsEditMarkdown)
-				{
-					<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Immediate Clearable Lines="14" Variant="Variant.Filled"/>
-				}
-				else
-				{
-					<MudPaper Elevation="1" MinHeight="19rem">
-						<MudMarkdown Value="@HeaderModel.Comment"/>
-					</MudPaper>
-				}
-			</MudStack>
-		</MudForm>
-		
+			@if (IsEditMarkdown)
+			{
+				<MudTextField T="string" Label="Comment" @bind-Value="HeaderModel.Comment" Immediate Clearable Lines="14" Variant="Variant.Filled" />
+			}
+			else
+			{
+				<MudPaper Elevation="1" MinHeight="19rem">
+					<MudMarkdown Value="@HeaderModel.Comment" />
+				</MudPaper>
+			}
+		</MudStack>
+	</MudForm>
+
 	@if (ShowTimes)
 	{
-		<MudPaper Class="mt-2 mb-1" Elevation="0" >
+		<MudPaper Class="mt-2 mb-1" Elevation="0">
 			<MudTable Items="@ElapsedTimeParts" Context="Part" FixedHeader Dense Breakpoint="Breakpoint.None">
-				<HeaderContent>
-					<MudTh>Elapsed time</MudTh>
-					<MudTh>Comment</MudTh>
-					<MudTh></MudTh>
-				</HeaderContent>
-				<RowTemplate>
+					<HeaderContent>
+						<MudTh>Elapsed time</MudTh>
+						<MudTh>Comment</MudTh>
+						<MudTh></MudTh>
+					</HeaderContent>
+					<RowTemplate>
 						<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudTd>
-					<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
-					<MudTd>
-						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)"/>
-					</MudTd>
-				</RowTemplate>
-			</MudTable>
-		</MudPaper>
+						<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
+						<MudTd>
+							<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)" />
+						</MudTd>
+					</RowTemplate>
+				</MudTable>
+			</MudPaper>
 	}
-	
-	</MudContainer>
 
-	@code {
+</MudContainer>
+
+@code {
 	[Parameter]
-	public Goal? Goal { get; set; }
+	public int GoalId { get; set; }
+	
 	[CascadingParameter]
 	public MainLayout? Layout { get; set; }
 
 	private HubConnection? _hubConnection;
 
 	private User? User => Layout?.User;
-	public UserSettings? UserSettings => Layout?.UserSettings;
+	private UserSettings? UserSettings => Layout?.UserSettings;
 
 	private GoalHeaderModel HeaderModel { get; set; } = new();
 	private List<GoalElapsedTimePart> ElapsedTimeParts { get; set; } = new();
-	public List<Contractor> Contractors { get; set; } = new();
+	private List<Contractor> Contractors { get; set; } = new();
 	private bool IsEditMarkdown { get; set; }
 	private bool ShowTimes { get; set; }
-	private string TimesHeight { get; set; } = "height: 0;";
 
-		protected override async Task OnInitializedAsync()
+	protected override async Task OnInitializedAsync()
 	{
 		Contractors = await ContractorsRepository.List();
 
@@ -91,20 +94,19 @@
 		_hubConnection.On<int, int, int>(nameof(ITimers.GoalElapsedTimePartRemoved), (userId, id, elapsedTimePartId) =>
 		{
 			if (User?.Id != userId) return;
-			if (Goal is null || Goal.Id != id) return;
+			if (GoalId != id) return;
 
 			var part = ElapsedTimeParts.FirstOrDefault(x => x.Id == elapsedTimePartId);
 			if (part is null) return;
 			if (ElapsedTimeParts.Remove(part))
 			{
-				Goal.ElapsedTimeParts.Remove(part);
 				InvokeAsync(StateHasChanged);
 			}
 		});
 		_hubConnection.On<int, ActiveGoal>(nameof(ITimers.GoalChanged), (userId, data) =>
 		{
 			if (User?.Id != userId) return;
-			if (Goal is null || Goal.Id != data.Id) return;
+			if (GoalId != data.Id) return;
 			HeaderModel.Name = data.Name;
 			HeaderModel.Comment = data.Comment;
 			HeaderModel.Contractor = data.Contractor;
@@ -113,52 +115,48 @@
 		await _hubConnection.StartAsync();
 	}
 
-	protected override void OnParametersSet()
+	protected override async Task OnParametersSetAsync()
 	{
-		if (Goal is not null)
+		Goal? goal = await GoalsRepository.OneFull(GoalId, User!.Id);
+		if (goal is null)
 		{
-			HeaderModel.Name = Goal.Name;
-			HeaderModel.Contractor = Goal.Contractor;
-			HeaderModel.Comment = Goal.Comment;
+			HeaderModel.Clear();
 			ElapsedTimeParts.Clear();
-			ElapsedTimeParts.AddRange(Goal.ElapsedTimeParts);
+			return;
 		}
-		else
-		{
-			Clear();
-			ElapsedTimeParts.Clear();
-		}
+		HeaderModel.Name = goal.Name;
+		HeaderModel.Contractor = goal.Contractor;
+		HeaderModel.Comment = goal.Comment;
+		ElapsedTimeParts.Clear();
+		ElapsedTimeParts.AddRange(goal.ElapsedTimeParts);
 	}
-
-
+	
 	private async Task Update()
 	{
 		await Dispatcher.Broadcast(new GoalChanged()
-		{
-			Id = Goal!.Id,
-			Name = HeaderModel.Name,
-			Contractor = HeaderModel.Contractor,
-			Comment = HeaderModel.Comment,
-			UserId = User!.Id,
-			UpdatedAt = DateTime.Now
-		});
+			{
+				Id = GoalId,
+				Name = HeaderModel.Name,
+				Contractor = HeaderModel.Contractor,
+				Comment = HeaderModel.Comment,
+				UserId = User!.Id,
+				UpdatedAt = DateTime.Now
+			});
 	}
 
-	public void Clear()
+	private void Clear()
 	{
-		HeaderModel.Name = string.Empty;
-		HeaderModel.Contractor = null;
-		HeaderModel.Comment = string.Empty;
+		HeaderModel.Clear();
 	}
 
 	private async Task Destroy(GoalElapsedTimePart entity)
 	{
 		await Dispatcher.Broadcast(new GoalElapsedPartRemoved()
-		{
-			Id = entity.Id,
-			GoalId = entity.Goal.Id,
-			UserId = User!.Id
-		});
+			{
+				Id = entity.Id,
+				GoalId = entity.Goal.Id,
+				UserId = User!.Id
+			});
 	}
 
 	public async ValueTask DisposeAsync()
@@ -166,18 +164,22 @@
 		if (_hubConnection is not null) await _hubConnection.DisposeAsync();
 	}
 
-		public void ShowTimeParts()
-		{
-			ShowTimes = !ShowTimes;
-		TimesHeight = ShowTimes ? "height: 40rem" : "height: 0";
-		}
+	private void ShowTimeParts()
+	{
+		ShowTimes = !ShowTimes;
+	}
 
 	private class GoalHeaderModel
 	{
 		public string Name { get; set; } = string.Empty;
 		public Contractor? Contractor { get; set; }
 		public string Comment { get; set; } = string.Empty;
+
+		public void Clear()
+		{
+			Name = string.Empty;
+			Contractor = null;
+			Comment = string.Empty;
+		}
 	}
 }
-
-	

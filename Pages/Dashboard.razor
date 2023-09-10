@@ -21,12 +21,6 @@
 
 	<MudTable class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
 	          CanCancelEdit RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
-		<ColGroup>
-			<col />
-			<col />
-			<col style="width: 50%;" />
-			<col />
-		</ColGroup>
 		<HeaderContent>
 			<MudTh>Contractor</MudTh>
 			<MudTh>Elapsed</MudTh>
@@ -41,7 +35,7 @@
 					<MudText Typo="Typo.button" Style="line-height: 20px">@context.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudText>
 					<MudToggleIconButton ToggledChanged="e => SwitchTimer(e, context)" Toggled="@context.Tick" Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop" />
 					<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(context)" />
-					<MudIconButton Icon="@Icons.Material.Filled.OpenInNew" @onclick="() => Details(context)" />
+					<MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Href="@($"/goals/{context.Id}/edit")" />
 				</MudStack>
 			</MudTd>
 		</RowTemplate>
@@ -63,10 +57,6 @@
 	</MudTable>
 </MudContainer>
 
-<MudDrawer @bind-Open="DrawerOpen" Anchor="Anchor.End" Elevation="1" Variant="DrawerVariant.Temporary" Width="40rem">
-		<GoalEditForm @ref="_goalEditForm" Goal="Goal" />
-</MudDrawer>
-
 @code {
 	private HubConnection? _hubConnection;
 
@@ -79,10 +69,7 @@
 	public List<ActiveGoal> Goals { get; set; } = new();
 	public string GoalName { get; set; } = string.Empty;
 	public List<Contractor> Contractors { get; set; } = new();
-
 	private GoalRowEditForm _goalBackup = new();
-	private bool DrawerOpen { get; set; }
-	private GoalEditForm? _goalEditForm;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -133,11 +120,6 @@
 	{
 		await GoalsRepository.Destroy(entity.Id);
 		Goals.Remove(entity);
-		if (Goal?.Id == entity.Id)
-		{
-			DrawerOpen = false;
-			Goal = null;
-		}
 	}
 
 
@@ -197,12 +179,6 @@
 			activeGoal.ElapsedTime = data;
 			activeGoal.Tick = false;
 		}
-	}
-
-	private async Task Details(ActiveGoal context)
-	{
-		Goal = await GoalsRepository.OneFull(context.Id, User!.Id);
-		DrawerOpen = true;
 	}
 
 	private class GoalRowEditForm
