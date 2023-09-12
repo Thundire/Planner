@@ -13,56 +13,90 @@
 <PageTitle>Dashboard</PageTitle>
 
 <MudContainer Class="mt-4">
-	<MudPaper Class="p-4">
-		<MudStack Row>
-			<MudTextField Class="pl-2" T="string" Label="Name" @bind-Value="GoalName" Clearable />
-			<MudButton Variant="Variant.Filled" OnClick="Store">Add</MudButton>
-		</MudStack>
-	</MudPaper>
+	<MudGrid>
+		<MudItem md="0" lg="4">
+			<MudTimeline>
+				@foreach (JobsNotes notes in JobsNotes)
+				{
+					<MudTimelineItem>
+						<ItemOpposite>
+							<MudText Typo="Typo.body2">@notes.Date.ToString("D")</MudText>
+						</ItemOpposite>
+						<ItemContent>
+							@foreach (JobsNote note in notes.Notes)
+							{
+								<MudCard>
+									<MudCardHeader>
+										<MudStack Row Spacing="30">
+											<MudText Typo="Typo.body2">@note.Name</MudText>
+											<MudText Typo="Typo.body2">@note.Time.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudText>
+										</MudStack>
+										
+									</MudCardHeader>
+									<MudCardContent>
+										<MudText Typo="Typo.body2">@note.Comment</MudText>
+									</MudCardContent>
+								</MudCard>
+							}
+						</ItemContent>
+					</MudTimelineItem>
+				}
+			</MudTimeline>
+		</MudItem>
 
-	<MudTable Class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
-	          CanCancelEdit RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
-		<HeaderContent>
-			<MudTh>Contractor</MudTh>
-			<MudTh>Elapsed</MudTh>
-			<MudTh>Name</MudTh>
-			<MudTh>
-				<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
-					<MudButtonGroup Size="Size.Small" Variant="Variant.Outlined" VerticalAlign>
-						<MudButton OnClick="CompleteJob">Complete</MudButton>
-					</MudButtonGroup>
+		<MudItem xs="12" lg="8">
+			<MudPaper Class="p-4">
+				<MudStack Row>
+					<MudTextField Class="pl-2" T="string" Label="Name" @bind-Value="GoalName" Clearable/>
+					<MudButton Variant="Variant.Filled" OnClick="Store">Add</MudButton>
 				</MudStack>
-			</MudTh>
-		</HeaderContent>
-		<RowTemplate>
-			<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
-			<MudTd DataLabel="Elapsed">@context.ElapsedTimeTotal.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudTd>
-			<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
-			<MudTd DataLabel="Buttons">
-				<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
-					<MudText Typo="Typo.button" Style="line-height: 20px">@context.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudText>
-					<MudToggleIconButton ToggledChanged="e => SwitchTimer(e, context)" Toggled="@context.Tick" Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop" />
-					<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(context)" />
-					<MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Href="@($"/goals/{context.Id}/edit")" />
-				</MudStack>
-			</MudTd>
-		</RowTemplate>
-		<RowEditingTemplate>
-			<MudTd DataLabel="Contractor">
-				<MudSelect T="Contractor" Label="Contractor" @bind-Value="context.Contractor" Dense Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
-					<MudSelectItem Value="Contractor.Empty"/>
-					@foreach (var item in Contractors)
-					{
-						<MudSelectItem Value="item"/>
-					}
-				</MudSelect>
-			</MudTd>
-			<MudTd DataLabel="ElapsedTime">@context.ElapsedTimeTotal.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudTd>
-			<MudTd DataLabel="Name">
-				<MudTextField T="string" Label="Name" @bind-Value="context.Name" Immediate Clearable Variant="Variant.Filled" />
-			</MudTd>
-		</RowEditingTemplate>
-	</MudTable>
+			</MudPaper>
+
+			<MudTable Class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
+			          CanCancelEdit RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
+				<HeaderContent>
+					<MudTh>Contractor</MudTh>
+					<MudTh>Elapsed</MudTh>
+					<MudTh>Name</MudTh>
+					<MudTh>
+						<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
+							<MudButtonGroup Size="Size.Small" Variant="Variant.Outlined" VerticalAlign>
+								<MudButton OnClick="CompleteJob">Complete</MudButton>
+							</MudButtonGroup>
+						</MudStack>
+					</MudTh>
+				</HeaderContent>
+				<RowTemplate>
+					<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
+					<MudTd DataLabel="Elapsed">@context.ElapsedTimeTotal.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudTd>
+					<MudTd DataLabel="Name">@context.Name.Clamp(100)</MudTd>
+					<MudTd DataLabel="Buttons">
+						<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
+							<MudText Typo="Typo.button" Style="line-height: 20px">@context.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudText>
+							<MudToggleIconButton ToggledChanged="e => SwitchTimer(e, context)" Toggled="@context.Tick" Icon="@Icons.Material.Filled.PlayArrow" ToggledIcon="@Icons.Material.Filled.Stop"/>
+							<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(context)"/>
+							<MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Href="@($"/goals/{context.Id}/edit")"/>
+						</MudStack>
+					</MudTd>
+				</RowTemplate>
+				<RowEditingTemplate>
+					<MudTd DataLabel="Contractor">
+						<MudSelect T="Contractor" Label="Contractor" @bind-Value="context.Contractor" Dense Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+							<MudSelectItem Value="Contractor.Empty"/>
+							@foreach (var item in Contractors)
+							{
+								<MudSelectItem Value="item"/>
+							}
+						</MudSelect>
+					</MudTd>
+					<MudTd DataLabel="ElapsedTime">@context.ElapsedTimeTotal.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudTd>
+					<MudTd DataLabel="Name">
+						<MudTextField T="string" Label="Name" @bind-Value="context.Name" Immediate Clearable Variant="Variant.Filled"/>
+					</MudTd>
+				</RowEditingTemplate>
+			</MudTable>
+		</MudItem>
+	</MudGrid>
 </MudContainer>
 
 @code {
