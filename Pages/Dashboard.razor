@@ -4,6 +4,7 @@
 @using Planner.Hubs
 @attribute [Authorize]
 @inject GoalsRepository GoalsRepository
+@inject JobsRepository JobsRepository
 @inject ContractorsRepository ContractorsRepository
 @inject NavigationManager NavigationManager
 @inject IDispatcher Dispatcher
@@ -77,6 +78,7 @@
 	public string GoalName { get; set; } = string.Empty;
 	public List<Contractor> Contractors { get; set; } = new();
 	private GoalRowEditForm _goalBackup = new();
+	private List<JobsNotes> JobsNotes { get; set; } = new();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -109,6 +111,18 @@
 			goal.ElapsedTimeTotal = time;
 			InvokeAsync(StateHasChanged);
 		});
+		_hubConnection.On<int, JobsNotes>(nameof(ITimers.JobBuild), (userId, notes) =>
+		{
+			if (User?.Id != userId) return;
+			Goals.ForEach(x =>
+			{
+				x.ElapsedTime = TimeSpan.Zero;
+				x.ElapsedTimePartId = 0;
+				x.Tick = false;
+			});
+			JobsNotes.Insert(0, notes);
+			InvokeAsync(StateHasChanged);
+		});
 
 		await _hubConnection.StartAsync();
 	}
@@ -119,6 +133,7 @@
 		{
 			if (User is null) return;
 			Goals = await GoalsRepository.List(User);
+			JobsNotes = await JobsRepository.List(User.Id);
 			StateHasChanged();
 		}
 	}

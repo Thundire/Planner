@@ -52,4 +52,5 @@ public interface ITimers
 	Task GoalChanged(int userId, ActiveGoal goal);
 	Task GoalElapsedTimePartRemoved(int userId, int goalId, int elapsedTimePartId);
 	Task GoalTimeChanged(int userId, int goalId, TimeSpan timeTotal);
+	Task JobBuild(int userId, JobsNotes jobsNotes);
 }

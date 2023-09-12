@@ -16,7 +16,7 @@ public class JobsRepository
 	public async Task<List<JobsNotes>> List(int userId)
 	{
 		await using DatabaseContext context = await _factory.CreateDbContextAsync();
-		return await context.JobsNotes.AsNoTracking().Include(x => x.Notes).ToListAsync();
+		return await context.JobsNotes.AsNoTracking().Include(x => x.Notes).OrderBy(x=>x.CreatedAt).ToListAsync();
 	}
 
 	public async Task<JobsNotes?> One(int id)
@@ -25,8 +25,41 @@ public class JobsRepository
 		return await context.JobsNotes.AsNoTracking().Include(x => x.Notes).FirstOrDefaultAsync(x=>x.Id == id);
 	}
 
-	public async Task<JobsNotes> Build(int userId)
+	public async Task<JobsNotes> Build(int userId, DateTime requestedAt)
 	{
-		return new();
+		await using DatabaseContext context = await _factory.CreateDbContextAsync();
+		User? user = await context.Users.FindAsync(userId);
+		if (user is null) throw new InvalidOperationException("Trying to build job from user that not exist");
+		var userGoals = await context.Goals.Include(x=>x.ElapsedTimeParts).Where(x=>x.User == user && x.ElapsedTimeParts.Count > 0).ToListAsync();
+		
+		JobsNotes notes = new ()
+		{
+			User = user,
+			CreatedAt = requestedAt,
+			Date = requestedAt.Date
+		};
+
+		foreach (Goal userGoal in userGoals)
+		{
+			TimeSpan totalElapsedTime = userGoal.CollapseElapsedTime();
+			if (totalElapsedTime < TimeSpan.FromMinutes(1))
+			{
+				userGoal.ElapsedTimeParts.Clear();
+				continue;
+			}
+
+			notes.Notes.Add(new()
+			{
+				CreatedAt = requestedAt,
+				Name = userGoal.Name,
+				Comment = userGoal.Comment,
+				Time = totalElapsedTime
+			});
+		}
+
+		context.JobsNotes.Update(notes);
+		await context.SaveChangesAsync();
+
+		return notes;
 	}
 }

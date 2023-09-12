@@ -30,6 +30,7 @@ public class BuildJob : IListener<JobBuildRequested>
 		{
 			await _hubContext.Clients.All.GoalChanged(broadcasted.UserId, goal);
 		});
-
+		var notes = await _jobsRepository.Build(broadcasted.UserId, broadcasted.RequestedAt);
+		await _hubContext.Clients.All.JobBuild(broadcasted.UserId, notes);
 	}
 }
