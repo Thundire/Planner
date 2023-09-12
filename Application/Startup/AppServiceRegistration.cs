@@ -48,6 +48,7 @@ public static class AppServiceRegistration
 
         services.AddScoped<ContractorsRepository>();
         services.AddScoped<GoalsRepository>();
+        services.AddScoped<JobsRepository>();
         services.AddScoped<UserSettingsRepository>();
         services.AddSingleton<TimeCounter>();
 
@@ -60,6 +61,7 @@ public static class AppServiceRegistration
         services.AddTransient<RemoveGoalElapsedPart>();
         services.AddTransient<UpdateGoal>();
         services.AddTransient<EmailNewUser>();
+        services.AddTransient<BuildJob>();
         return services;
     }
 

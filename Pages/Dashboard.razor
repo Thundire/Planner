@@ -19,12 +19,19 @@
 		</MudStack>
 	</MudPaper>
 
-	<MudTable class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
+	<MudTable Class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
 	          CanCancelEdit RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
 		<HeaderContent>
 			<MudTh>Contractor</MudTh>
 			<MudTh>Elapsed</MudTh>
 			<MudTh>Name</MudTh>
+			<MudTh>
+				<MudStack Row Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
+					<MudButtonGroup Size="Size.Small" Variant="Variant.Outlined" VerticalAlign>
+						<MudButton OnClick="CompleteJob">Complete</MudButton>
+					</MudButtonGroup>
+				</MudStack>
+			</MudTh>
 		</HeaderContent>
 		<RowTemplate>
 			<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
@@ -197,4 +204,14 @@
 			Comment = data.Comment;
 		}
 	}
+
+	private async Task CompleteJob()
+	{
+		await Dispatcher.Broadcast(new JobBuildRequested()
+		{
+			RequestedAt = DateTime.Now,
+			UserId = User!.Id
+		});
+	}
+
 }

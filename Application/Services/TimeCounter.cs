@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
@@ -39,6 +40,20 @@ public class TimeCounter
 			}
 		}
 		return TimeSpan.Zero;
+	}
+
+	public List<Elapsed> Stop(int userId)
+	{
+		List<Elapsed> elapsed = new();
+		if (Timers.TryRemove(userId, out var timers))
+		{
+			foreach (var timerData in timers)
+			{
+				timerData.Value.Dispose();
+				elapsed.Add(new(timerData.Key, userId, timerData.Value.ElapsedTime));
+			}
+		}
+		return elapsed;
 	}
 
 	public List<Elapsed> ListElapsedTime() => Timers.SelectMany(x => x.Value.Select(c=> new Elapsed(c.Key, x.Key, c.Value.ElapsedTime))).ToList();

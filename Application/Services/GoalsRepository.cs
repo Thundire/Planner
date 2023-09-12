@@ -134,6 +134,26 @@ public class GoalsRepository
 		existed.UpdatedAt  = data.UpdatedAt;
 		await context.SaveChangesAsync();
 	}
+
+    public async Task<List<ActiveGoal>> Update(List<GoalElapsedTimePart> elapsedParts)
+    {
+	    await using DatabaseContext context = await _factory.CreateDbContextAsync();
+	    var set = await context.GoalElapsedTimeParts.Include(x => x.Goal).ToListAsync();
+	    var join = from s in set
+		    join e in elapsedParts on s.Id equals e.Id
+		    select new {existed= s, received= e};
+	    HashSet<int> affectedGoalsIds = new();
+	    foreach (var data in join)
+	    {
+		    affectedGoalsIds.Add(data.existed.Goal.Id);
+			data.existed.ElapsedTime = data.received.ElapsedTime;
+			data.existed.UpdatedAt   = data.received.UpdatedAt;
+		}
+	    await context.SaveChangesAsync();
+		
+	    var affectedGoals = await context.Goals.AsNoTracking().Include(x => x.ElapsedTimeParts).Where(x => affectedGoalsIds.Contains(x.Id)).ToListAsync();
+	    return affectedGoals.Select(x=> new ActiveGoal(x)).ToList();
+	}
 }
 
 public record GoalElapsedTimePartStartData(int GoalId, DateTime StartTime);

@@ -15,6 +15,7 @@ public static class Events
         registration.Register<UserCreated>().Subscribe<EmailNewUser>();
         registration.Register<GoalChanged>().Subscribe<UpdateGoal>();
         registration.Register<GoalElapsedPartRemoved>().Subscribe<RemoveGoalElapsedPart>();
+        registration.Register<JobBuildRequested>().Subscribe<BuildJob>();
 
         return services;
     }
