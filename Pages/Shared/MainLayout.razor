@@ -11,12 +11,14 @@
 
 <CascadingValue Value="this">
 	<MudLayout>
+		<MudBreakpointProvider OnBreakpointChanged="BreakPointChanged">
 		<MudThemeManagerButton OnClick="@((e) => OpenThemeManager(true))" />
 		<MudThemeManager Open="_themeManagerOpen" OpenChanged="OpenThemeManager" Theme="_themeManager" ThemeChanged="UpdateTheme" />
 		<NavMenu OnThemeChanged="SetThemeMode"/>
 		<MudMainContent>
 			@Body
 		</MudMainContent>
+		</MudBreakpointProvider>
 	</MudLayout>
 </CascadingValue>
 
@@ -35,6 +37,8 @@
 	private bool _themeManagerOpen;
 	[CascadingParameter] 
 	public EventCallback<TimeFormattersChanged> OnTimeFormattersChanged { get; set; }
+	[CascadingParameter] 
+	public Breakpoint CurrentBreakpoint { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -58,7 +62,7 @@
 
 		StateHasChanged();
 	}
-	
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await base.OnAfterRenderAsync(firstRender);
@@ -91,5 +95,10 @@
 		if (User?.Id != data.UserId || UserSettings is null) return;
 		UserSettings.TimeFormatter = data.TimeFormatter;
 		UserSettings.DetailedTimeFormatter = data.DetailedTimeFormatter;
+	}
+
+	private void BreakPointChanged(Breakpoint breakpoint)
+	{
+		CurrentBreakpoint = breakpoint;
 	}
 }
