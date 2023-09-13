@@ -37,7 +37,7 @@ public class TimersHub : Hub<ITimers>
 			GoalElapsedTimePartData elapsedTimePartData = new(id, elapsedTimeTotal, updateAt);
 			ActiveGoal? goal = await _goalsRepository.StopTimer(elapsedTimePartData, userId);
 			if (goal is null) return elapsedTimeTotal;
-			await Clients.All.GoalChanged(userId, goal);
+			await Clients.All.TimerStopped(goal.Id, userId, goal.ElapsedTimeTotal);
 		}
 		return elapsedTimeTotal;
 	}
@@ -48,6 +48,7 @@ public interface ITimers
 	Task Tick(int id, int userId, TimeSpan elapsed);
 	Task ActivateTimer(int id, int userId, DateTime startTime);
 	Task StopTimer(int id, int userId);
+	Task TimerStopped(int id, int userId, TimeSpan timeTotal);
 	Task GoalChanged(int userId, ActiveGoal goal);
 	Task GoalElapsedTimePartRemoved(int userId, int goalId, int elapsedTimePartId);
 	Task GoalTimeChanged(int userId, int goalId, TimeSpan timeTotal);

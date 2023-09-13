@@ -36,7 +36,7 @@ public class JobsRepository
 		{
 			User = user,
 			CreatedAt = requestedAt,
-			Date = requestedAt.Date
+			Date = requestedAt
 		};
 
 		foreach (Goal userGoal in userGoals)

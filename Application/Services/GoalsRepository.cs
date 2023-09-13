@@ -130,8 +130,13 @@ public class GoalsRepository
 		await using DatabaseContext context = await _factory.CreateDbContextAsync();
 		var existed = await context.Goals.FindAsync(data.Id);
 		if (existed is null) throw new InvalidOperationException("Not found goal");
+		if (data.Contractor is not null && !Equals(existed.Contractor, data.Contractor))
+		{
+			var existedContractor = await context.Contractors.FindAsync(data.Contractor.Id);
+			existed.Contractor = existedContractor;
+		}
 		existed.Name       = data.Name;
-		existed.Contractor = data.Contractor;
+		
 		existed.Comment    = data.Comment;
 		existed.UpdatedAt  = data.UpdatedAt;
 		await context.SaveChangesAsync();
@@ -161,7 +166,7 @@ public class GoalsRepository
     public async Task<ActiveGoal?> StopTimer(GoalElapsedTimePartData data, int userId)
     {
 		await using DatabaseContext context = await _factory.CreateDbContextAsync();
-		var elapsedTimePart = await context.GoalElapsedTimeParts.Include(x => x.Goal).FirstOrDefaultAsync(x => x.Id == data.PartId);
+		var elapsedTimePart = await context.GoalElapsedTimeParts.Include(x => x.Goal).ThenInclude(x=>x.ElapsedTimeParts).FirstOrDefaultAsync(x => x.Id == data.PartId);
 		if (elapsedTimePart is null) throw new InvalidOperationException("ElapsedTimePart not existed");
 		elapsedTimePart.ElapsedTime                   = data.ElapsedTime;
 		elapsedTimePart.UpdatedAt                     = data.UpdatedAt;

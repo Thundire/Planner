@@ -146,6 +146,17 @@
 			goal.Copy(data);
 			InvokeAsync(StateHasChanged);
 		});
+		_hubConnection.On<int, int, TimeSpan>(nameof(ITimers.TimerStopped), (goalId, userId, timeTotal) =>
+		{
+			if (User?.Id != userId) return;
+			ActiveGoal? goal = Goals.Find(x => x.Id == goalId);
+			if (goal is null) return;
+			goal.ElapsedTimeTotal = timeTotal;
+			goal.ElapsedTimePartId = 0;
+			goal.ElapsedTime = TimeSpan.Zero;
+			goal.Tick = false;
+			InvokeAsync(StateHasChanged);
+		});
 		_hubConnection.On<int, int, TimeSpan>(nameof(ITimers.GoalTimeChanged), (userId, goalId, time) =>
 		{
 			if (User?.Id != userId) return;

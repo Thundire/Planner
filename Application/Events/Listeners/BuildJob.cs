@@ -28,7 +28,7 @@ public class BuildJob : IListener<JobBuildRequested>
 		var affectedGoals = await _goalsRepository.StopTimers(elapsedParts);
 		await Parallel.ForEachAsync(affectedGoals, async (goal, token) =>
 		{
-			await _hubContext.Clients.All.GoalChanged(broadcasted.UserId, goal);
+			await _hubContext.Clients.All.TimerStopped(goal.Id, broadcasted.UserId, goal.ElapsedTimeTotal);
 		});
 		var notes = await _jobsRepository.Build(broadcasted.UserId, broadcasted.RequestedAt);
 		await _hubContext.Clients.All.JobBuild(broadcasted.UserId, notes);
