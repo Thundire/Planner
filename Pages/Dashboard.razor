@@ -14,8 +14,9 @@
 
 <MudContainer Class="mt-4">
 	<MudGrid>
-		<MudItem md="0" lg="4">
-			<MudTimeline>
+		<MudItem lg="4">
+			<MudBreakpointProvider OnBreakpointChanged="BreakPointChanged">
+				<MudTimeline TimelineOrientation="@_timelineOrientation">
 				@foreach (JobsNotes notes in JobsNotes)
 				{
 					<MudTimelineItem>
@@ -31,7 +32,7 @@
 											<MudText Typo="Typo.body2">@note.Name</MudText>
 											<MudText Typo="Typo.body2">@note.Time.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudText>
 										</MudStack>
-										
+
 									</MudCardHeader>
 									<MudCardContent>
 										<MudText Typo="Typo.body2">@note.Comment</MudText>
@@ -42,6 +43,8 @@
 					</MudTimelineItem>
 				}
 			</MudTimeline>
+
+			</MudBreakpointProvider>
 		</MudItem>
 
 		<MudItem xs="12" lg="8">
@@ -113,6 +116,7 @@
 	public List<Contractor> Contractors { get; set; } = new();
 	private GoalRowEditForm _goalBackup = new();
 	private List<JobsNotes> JobsNotes { get; set; } = new();
+	private TimelineOrientation _timelineOrientation = TimelineOrientation.Vertical;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -150,6 +154,7 @@
 			if (User?.Id != userId) return;
 			Goals.ForEach(x =>
 			{
+				x.ElapsedTimeTotal = TimeSpan.Zero;
 				x.ElapsedTime = TimeSpan.Zero;
 				x.ElapsedTimePartId = 0;
 				x.Tick = false;
@@ -261,6 +266,11 @@
 			RequestedAt = DateTime.Now,
 			UserId = User!.Id
 		});
+	}
+
+	private void BreakPointChanged(Breakpoint breakpoint)
+	{
+		_timelineOrientation = breakpoint is Breakpoint.SmAndDown ? TimelineOrientation.Horizontal : TimelineOrientation.Vertical;
 	}
 
 }

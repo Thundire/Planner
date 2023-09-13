@@ -22,12 +22,14 @@ public class ActiveGoal
 
 	public ActiveGoal(Goal source)
 	{
-		Id               = source.Id;
-		CreatedAt        = source.CreatedAt;
-		UpdatedAt        = source.UpdatedAt;
-		Name             = source.Name;
-		Contractor       = source.Contractor;
-		Comment          = source.Comment;
-		ElapsedTimeTotal = source.CollapseElapsedTime();
+		Id                = source.Id;
+		CreatedAt         = source.CreatedAt;
+		UpdatedAt         = source.UpdatedAt;
+		Name              = source.Name;
+		Contractor        = source.Contractor;
+		Comment           = source.Comment;
+		ElapsedTimePartId = source.CurrentElapsedTimePartId;
+		Tick              = ElapsedTimePartId != 0;
+		ElapsedTimeTotal  = source.CollapseElapsedTime();
 	}
 }

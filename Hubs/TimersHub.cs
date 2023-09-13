@@ -35,8 +35,7 @@ public class TimersHub : Hub<ITimers>
 		if (elapsedTimeTotal != TimeSpan.Zero)
 		{
 			GoalElapsedTimePartData elapsedTimePartData = new(id, elapsedTimeTotal, updateAt);
-			var elapsedTimePart = await _goalsRepository.Update(elapsedTimePartData);
-			ActiveGoal? goal = await _goalsRepository.One(elapsedTimePart.Goal.Id, userId);
+			ActiveGoal? goal = await _goalsRepository.StopTimer(elapsedTimePartData, userId);
 			if (goal is null) return elapsedTimeTotal;
 			await Clients.All.GoalChanged(userId, goal);
 		}

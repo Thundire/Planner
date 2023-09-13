@@ -42,11 +42,8 @@ public class JobsRepository
 		foreach (Goal userGoal in userGoals)
 		{
 			TimeSpan totalElapsedTime = userGoal.CollapseElapsedTime();
-			if (totalElapsedTime < TimeSpan.FromMinutes(1))
-			{
-				userGoal.ElapsedTimeParts.Clear();
-				continue;
-			}
+			userGoal.ElapsedTimeParts.Clear();
+			if (totalElapsedTime < TimeSpan.FromMinutes(1)) continue;
 
 			notes.Notes.Add(new()
 			{

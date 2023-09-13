@@ -100,6 +100,8 @@ public class GoalsRepository
 		};
 		context.GoalElapsedTimeParts.Add(elapsedTimePart);
 		await context.SaveChangesAsync();
+		goal.CurrentElapsedTimePartId = elapsedTimePart.Id;
+		await context.SaveChangesAsync();
 		return elapsedTimePart;
 	}
 
@@ -135,7 +137,7 @@ public class GoalsRepository
 		await context.SaveChangesAsync();
 	}
 
-    public async Task<List<ActiveGoal>> Update(List<GoalElapsedTimePart> elapsedParts)
+    public async Task<List<ActiveGoal>> StopTimers(List<GoalElapsedTimePart> elapsedParts)
     {
 	    await using DatabaseContext context = await _factory.CreateDbContextAsync();
 	    var set = await context.GoalElapsedTimeParts.Include(x => x.Goal).ToListAsync();
@@ -146,13 +148,26 @@ public class GoalsRepository
 	    foreach (var data in join)
 	    {
 		    affectedGoalsIds.Add(data.existed.Goal.Id);
-			data.existed.ElapsedTime = data.received.ElapsedTime;
-			data.existed.UpdatedAt   = data.received.UpdatedAt;
-		}
+			data.existed.ElapsedTime                   = data.received.ElapsedTime;
+			data.existed.UpdatedAt                     = data.received.UpdatedAt;
+			data.existed.Goal.CurrentElapsedTimePartId = 0;
+	    }
 	    await context.SaveChangesAsync();
 		
 	    var affectedGoals = await context.Goals.AsNoTracking().Include(x => x.ElapsedTimeParts).Where(x => affectedGoalsIds.Contains(x.Id)).ToListAsync();
 	    return affectedGoals.Select(x=> new ActiveGoal(x)).ToList();
+	}
+
+    public async Task<ActiveGoal?> StopTimer(GoalElapsedTimePartData data, int userId)
+    {
+		await using DatabaseContext context = await _factory.CreateDbContextAsync();
+		var elapsedTimePart = await context.GoalElapsedTimeParts.Include(x => x.Goal).FirstOrDefaultAsync(x => x.Id == data.PartId);
+		if (elapsedTimePart is null) throw new InvalidOperationException("ElapsedTimePart not existed");
+		elapsedTimePart.ElapsedTime                   = data.ElapsedTime;
+		elapsedTimePart.UpdatedAt                     = data.UpdatedAt;
+		elapsedTimePart.Goal.CurrentElapsedTimePartId = 0;
+		await context.SaveChangesAsync();
+		return new(elapsedTimePart.Goal);
 	}
 }
 

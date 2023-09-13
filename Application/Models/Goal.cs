@@ -11,6 +11,7 @@ public class Goal : BaseModel
     public List<GoalElapsedTimePart> ElapsedTimeParts { get; set; } = new();
     public Contractor? Contractor { get; set; }
     public User? User { get; set; }
+    public int CurrentElapsedTimePartId { get; set; }
 
     public TimeSpan CollapseElapsedTime()
     {
