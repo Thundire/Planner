@@ -43,7 +43,6 @@ public class JobsRepository
 		{
 			TimeSpan totalElapsedTime = userGoal.CollapseElapsedTime();
 			userGoal.ElapsedTimeParts.Clear();
-			if (totalElapsedTime < TimeSpan.FromMinutes(1)) continue;
 
 			notes.Notes.Add(new()
 			{
