@@ -37,7 +37,7 @@
 											<MudStack Row AlignItems="AlignItems.Center" Justify="Justify.Center">
 												<MudText>@note.Name</MudText>
 												<MudSpacer/>
-												<MudToggleIconButton Toggled="@note.Completed" Icon="@Icons.Material.Outlined.Done" ToggledIcon="@Icons.Material.Filled.Done"/>
+												<MudToggleIconButton Toggled="@note.Completed" ToggledChanged="(v) => SetJobCompleteStatus(notes, note, v)" Icon="@Icons.Material.Outlined.Done" ToggledIcon="@Icons.Custom.Uncategorized.AlertSuccess"/>
 												<MudText>@note.Time.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudText>
 											</MudStack>
 											<MudMarkdown Value="@note.Comment"/>
@@ -178,6 +178,14 @@
 			JobsNotes.Insert(0, notes);
 			InvokeAsync(StateHasChanged);
 		});
+		_hubConnection.On<int, int, int, bool>(nameof(ITimers.JobStatusChanged), (userId, notes, note, status) =>
+		{
+			if (User?.Id != userId) return;
+			var jobsNote = JobsNotes.Find(x=>x.Id == notes)?.Notes.Find(x=>x.Id == note);
+			if(jobsNote is null) return;
+			jobsNote.Completed = status;
+			InvokeAsync(StateHasChanged);
+		});
 
 		await _hubConnection.StartAsync();
 	}
@@ -274,7 +282,7 @@
 			Comment = data.Comment;
 		}
 	}
-	
+
 	private async Task CompleteJob()
 	{
 		await Dispatcher.Broadcast(new JobBuildRequested()
@@ -285,4 +293,11 @@
 	}
 
 	private static bool IsLgAndUp(Breakpoint? breakpoint) => breakpoint is Breakpoint.Lg or Breakpoint.Xl or Breakpoint.Xxl;
+
+	private async Task SetJobCompleteStatus(JobsNotes jobsNotes, JobsNote note, bool toggled)
+	{
+		if(User is null || _hubConnection is null) return;
+		await _hubConnection.SendAsync(nameof(ITimers.SetJobStatus), User!.Id, jobsNotes.Id, note.Id, toggled);
+	}
+
 	}

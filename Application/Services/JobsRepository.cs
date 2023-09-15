@@ -58,4 +58,14 @@ public class JobsRepository
 
 		return notes;
 	}
+
+	public async Task SetJobsStatus(int jobsNoteId, bool status)
+	{
+
+		await using DatabaseContext context = await _factory.CreateDbContextAsync();
+		JobsNote? existed = await context.Jobs.FindAsync(jobsNoteId);
+		if (existed is null) throw new InvalidOperationException("Trying to change jobs note status that not exist");
+		existed.Completed = status;
+		await context.SaveChangesAsync();
+	}
 }

@@ -13,12 +13,14 @@ public class TimersHub : Hub<ITimers>
 	private readonly TimeCounter _timeCounter;
 	private readonly GoalsRepository _goalsRepository;
 	private readonly IQueue _queue;
+	private readonly JobsRepository _jobsRepository;
 
-	public TimersHub(TimeCounter timeCounter, GoalsRepository goalsRepository, IQueue queue)
+	public TimersHub(TimeCounter timeCounter, GoalsRepository goalsRepository, IQueue queue, JobsRepository jobsRepository)
 	{
-		_timeCounter     = timeCounter;
-		_goalsRepository = goalsRepository;
-		_queue      = queue;
+		_timeCounter         = timeCounter;
+		_goalsRepository     = goalsRepository;
+		_queue               = queue;
+		_jobsRepository = jobsRepository;
 	}
 	
 	public async Task<int> ActivateTimer(int id, int userId, DateTime startTime)
@@ -41,6 +43,12 @@ public class TimersHub : Hub<ITimers>
 		}
 		return elapsedTimeTotal;
 	}
+
+	public async Task SetJobStatus(int userId, int jobsNotesId, int jobsNoteId, bool status)
+	{
+		await _jobsRepository.SetJobsStatus(jobsNoteId, status);
+		await Clients.All.JobStatusChanged(userId, jobsNotesId, jobsNoteId, status);
+	}
 }
 
 public interface ITimers
@@ -53,4 +61,6 @@ public interface ITimers
 	Task GoalElapsedTimePartRemoved(int userId, int goalId, int elapsedTimePartId);
 	Task GoalTimeChanged(int userId, int goalId, TimeSpan timeTotal);
 	Task JobBuild(int userId, JobsNotes jobsNotes);
+	Task SetJobStatus(int userId, int jobsNotesId, int jobsNoteId, bool status);
+	Task JobStatusChanged(int userId, int jobsNotesId, int jobsNoteId, bool status);
 }
