@@ -60,8 +60,10 @@
 				</MudStack>
 			</MudPaper>
 
-			<MudTable Class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense FixedHeader Breakpoint="Breakpoint.None"
-			          CanCancelEdit RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
+			<MudTable Class="w-full my-12" T="ActiveGoal" Items="@Goals" Hover Dense Virtualize FixedHeader Breakpoint="Breakpoint.None"
+			          CanCancelEdit EditTrigger="TableEditTrigger.EditButton" RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit"
+			          GroupBy="@_groupDefinition"
+			          GroupHeaderStyle="background-color:var(--mud-palette-background-grey)">
 				<HeaderContent>
 					<MudTh>Contractor</MudTh>
 					<MudTh>Elapsed</MudTh>
@@ -74,6 +76,9 @@
 						</MudStack>
 					</MudTh>
 				</HeaderContent>
+				<GroupHeaderTemplate>
+					<MudTh Class="font-medium" colspan="4">@(context.Key ?? "Others")</MudTh>
+				</GroupHeaderTemplate>
 				<RowTemplate>
 					<MudTd DataLabel="Contractor">@(context.Contractor?.Name ?? string.Empty)</MudTd>
 					<MudTd DataLabel="Elapsed">@context.ElapsedTimeTotal.ToString(UserSettings.TimeFormatterValue(UserSettings))</MudTd>
@@ -299,5 +304,13 @@
 		if(User is null || _hubConnection is null) return;
 		await _hubConnection.SendAsync(nameof(ITimers.SetJobStatus), User!.Id, jobsNotes.Id, note.Id, toggled);
 	}
+
+		private TableGroupDefinition<ActiveGoal> _groupDefinition = new()
+		{
+			GroupName = "Group",
+			Indentation = false,
+			Expandable = false,
+			Selector = (e) => e.Contractor
+		};
 
 	}
