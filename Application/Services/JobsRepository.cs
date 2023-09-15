@@ -16,7 +16,7 @@ public class JobsRepository
 	public async Task<List<JobsNotes>> List(int userId)
 	{
 		await using DatabaseContext context = await _factory.CreateDbContextAsync();
-		return await context.JobsNotes.AsNoTracking().Include(x => x.Notes).OrderBy(x=>x.CreatedAt).ToListAsync();
+		return await context.JobsNotes.AsNoTracking().Include(x => x.Notes).OrderByDescending(x=>x.CreatedAt).ToListAsync();
 	}
 
 	public async Task<JobsNotes?> One(int id)
