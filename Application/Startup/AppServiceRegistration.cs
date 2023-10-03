@@ -62,6 +62,7 @@ public static class AppServiceRegistration
         services.AddTransient<UpdateGoal>();
         services.AddTransient<EmailNewUser>();
         services.AddTransient<BuildJob>();
+        services.AddTransient<EditTimePartByHand>();
         return services;
     }
 

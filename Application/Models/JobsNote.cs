@@ -8,4 +8,5 @@ public class JobsNote : BaseModel
 	public string Comment { get; set; } = string.Empty;
 	public TimeSpan Time { get; set; }
 	public bool Completed { get; set; }
+	public Contractor? Contractor { get; set; }
 }

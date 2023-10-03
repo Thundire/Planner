@@ -47,19 +47,28 @@
 	@if (ShowTimes)
 	{
 		<MudPaper Class="mt-2 mb-1" Elevation="0">
-			<MudTable Items="@ElapsedTimeParts" Context="Part" FixedHeader Dense Breakpoint="Breakpoint.None">
+			<MudTable Items="@ElapsedTimeParts" Context="Part" FixedHeader Dense Breakpoint="Breakpoint.None"
+			          CanCancelEdit EditTrigger="TableEditTrigger.EditButton" RowEditCommit="CommitRowEdit" RowEditPreview="BackupRowEdit" RowEditCancel="CancelRowEdit">
 					<HeaderContent>
 						<MudTh>Elapsed time</MudTh>
 						<MudTh>Comment</MudTh>
 						<MudTh></MudTh>
 					</HeaderContent>
-					<RowTemplate>
-						<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudTd>
-						<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
-						<MudTd>
-							<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)" />
-						</MudTd>
-					</RowTemplate>
+				<RowTemplate>
+					<MudTd DataLabel="Elapsed time">@Part.ElapsedTime.ToString(UserSettings.DetailedTimeFormatterValue(UserSettings))</MudTd>
+					<MudTd DataLabel="Comment">@Part.Comment.Clamp(100)</MudTd>
+					<MudTd>
+						<MudIconButton Icon="@Icons.Material.Filled.Delete" @onclick="() => Destroy(Part)" />
+					</MudTd>
+				</RowTemplate>
+				<RowEditingTemplate>
+					<MudTd DataLabel="Elapsed time">
+						<MudTimePicker Time="@Part.ElapsedTime" TimeChanged="time => Part.ChangeTime(time)"></MudTimePicker>
+					</MudTd>
+					<MudTd DataLabel="Comment">
+						<MudTextField T="string" @bind-Text="Part.Comment"></MudTextField>
+					</MudTd>
+				</RowEditingTemplate>
 				</MudTable>
 			</MudPaper>
 	}
@@ -69,7 +78,7 @@
 @code {
 	[Parameter]
 	public int GoalId { get; set; }
-	
+
 	[CascadingParameter]
 	public MainLayout? Layout { get; set; }
 
@@ -83,6 +92,7 @@
 	private List<Contractor> Contractors { get; set; } = new();
 	private bool IsEditMarkdown { get; set; }
 	private bool ShowTimes { get; set; }
+	private GoalTimePartRowEditForm _goalTimePartBackup = new();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -112,6 +122,20 @@
 			HeaderModel.Contractor = data.Contractor;
 			InvokeAsync(StateHasChanged);
 		});
+		_hubConnection.On<int, int, int, TimeSpan, bool, string>(nameof(ITimers.GoalTimePartTimeChanged), (int userId, int goalId, int goalPartId, TimeSpan time, bool editedByHand, string comment) =>
+		{
+			if (User?.Id != userId) return;
+			if (GoalId != goalId) return;
+			var part = ElapsedTimeParts.Find(x => x.Id == goalPartId);
+			if(part is null) return;
+			if (editedByHand)
+			{
+				part.ElapsedTime = time;
+				part.EditedByHand = true;
+			}
+			part.Comment = comment;
+			InvokeAsync(StateHasChanged);
+		});
 		await _hubConnection.StartAsync();
 	}
 
@@ -130,7 +154,7 @@
 		ElapsedTimeParts.Clear();
 		ElapsedTimeParts.AddRange(goal.ElapsedTimeParts);
 	}
-	
+
 	private async Task Update()
 	{
 		await Dispatcher.Broadcast(new GoalChanged()
@@ -180,6 +204,48 @@
 			Name = string.Empty;
 			Contractor = null;
 			Comment = string.Empty;
+		}
+	}
+
+	private async void CommitRowEdit(object item)
+	{
+		if (item is not GoalElapsedTimePart data) return;
+		await Dispatcher.Broadcast(new TimePartEditedByHand()
+		{
+			UserId = User!.Id,
+			PartId = data.Id,
+			Comment = data.Comment,
+			Time = data.ElapsedTime,
+			UpdatedAt = DateTime.Now
+		});
+	}
+
+	private void BackupRowEdit(object item)
+	{
+		if (item is not GoalElapsedTimePart data) return;
+		_goalTimePartBackup.Fill(data);
+	}
+
+	private void CancelRowEdit(object item)
+	{
+		if (item is not GoalElapsedTimePart data) return;
+		data.ElapsedTime = _goalTimePartBackup.Time;
+		data.Comment = _goalTimePartBackup.Comment;
+	}
+
+	private class GoalTimePartRowEditForm
+	{
+		public GoalElapsedTimePart? Source { get; set; }
+		public int Id { get; set; }
+		public TimeSpan Time { get; set; }
+		public string Comment { get; set; } = string.Empty;
+
+		public void Fill(GoalElapsedTimePart source)
+		{
+			Source = source;
+			Id = source.Id;
+			Time = source.ElapsedTime;
+			Comment = source.Comment;
 		}
 	}
 }

@@ -60,7 +60,9 @@ public interface ITimers
 	Task GoalChanged(int userId, ActiveGoal goal);
 	Task GoalElapsedTimePartRemoved(int userId, int goalId, int elapsedTimePartId);
 	Task GoalTimeChanged(int userId, int goalId, TimeSpan timeTotal);
+	Task GoalTimePartTimeChanged(int userId, int goalId, int goalPartId, TimeSpan time);
 	Task JobBuild(int userId, JobsNotes jobsNotes);
 	Task SetJobStatus(int userId, int jobsNotesId, int jobsNoteId, bool status);
 	Task JobStatusChanged(int userId, int jobsNotesId, int jobsNoteId, bool status);
+	Task GoalTimePartTimeChanged(int userId, int goalId, int goalPartId, TimeSpan time, bool editedByHand, string comment);
 }

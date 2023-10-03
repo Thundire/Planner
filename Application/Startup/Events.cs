@@ -16,6 +16,7 @@ public static class Events
         registration.Register<GoalChanged>().Subscribe<UpdateGoal>();
         registration.Register<GoalElapsedPartRemoved>().Subscribe<RemoveGoalElapsedPart>();
         registration.Register<JobBuildRequested>().Subscribe<BuildJob>();
+        registration.Register<TimePartEditedByHand>().Subscribe<EditTimePartByHand>();
 
         return services;
     }

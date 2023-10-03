@@ -105,13 +105,21 @@ public class GoalsRepository
 		return elapsedTimePart;
 	}
 
-    public async Task<GoalElapsedTimePart> Update(GoalElapsedTimePartData data)
+    public async Task<GoalElapsedTimePart> ChangeTimeByHand(TimePartEditedByHand data)
 	{
 		await using DatabaseContext context = await _factory.CreateDbContextAsync();
 		var elapsedTimePart = await context.GoalElapsedTimeParts.Include(x=>x.Goal).FirstOrDefaultAsync(x=>x.Id == data.PartId);
 		if (elapsedTimePart is null) throw new InvalidOperationException("ElapsedTimePart not existed");
-		elapsedTimePart.ElapsedTime = data.ElapsedTime;
-		elapsedTimePart.UpdatedAt   = data.UpdatedAt;
+		
+		if (elapsedTimePart.ElapsedTime != data.Time)
+		{
+			elapsedTimePart.ElapsedTime  = data.Time;
+			elapsedTimePart.EditedByHand = true;
+		}
+
+		elapsedTimePart.Comment   = data.Comment;
+		elapsedTimePart.UpdatedAt = data.UpdatedAt;
+
 		await context.SaveChangesAsync();
 		return elapsedTimePart;
 	}
