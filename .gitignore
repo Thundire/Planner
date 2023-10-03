@@ -479,3 +479,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+/Planner.db-shm
+/Planner.db-wal
